@@ -14,6 +14,7 @@ The tiles are designed to be modular and can be arranged in any configuration yo
 ## Parts
 
 The base of the tiles is 3D printed, all other components are off the shelf parts.
+Below is a list of all the parts used to build 2 tiles.
 
 | Part | Quantity | Price | Link |
 | ---- | -------- | ----- | ---- |
