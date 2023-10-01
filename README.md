@@ -54,7 +54,7 @@ The ESP32 can detect this and trigger the lights and music.
 
 | Team member | Assignment |
 | ---- | ---------- |
-| @Robbedoes24 | MQTT communication and general tasks |
-| @AlberiekDepreytere | Audio solution |
-| @LucaClrk | Lighting solution |
-| @RubenBelligh | Person Detection |
+| [Rob Cocquyt](https://github.com/Robbedoes24) | MQTT communication and general tasks |
+| [ Ruben Belligh](https://github.com/RubenBelligh) | Person Detection |
+| [Luca De Clerck](https://github.com/LucaClrk) | Lighting solution |
+| [Alberiek Depreytere](https://github.com/AlberiekDepreytere) | Audio solution |
