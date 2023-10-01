@@ -11,13 +11,6 @@ The tiles are designed to be modular and can be arranged in any configuration yo
 > This project is still in development and not yet finished.  
 > All the code and designs are early prototypes and are subject to change.  
 
-## Features
-
-- Modular design
-- Scalable
-- Standalone or networked
-- Music player
-
 ## Parts
 
 The base of the tiles is 3D printed, all other components are off the shelf parts.
@@ -42,6 +35,9 @@ Total cost: €198,62 (excluding 3d printed parts)
 The 3D printed parts are designed in Fusion 360 and can be found in the `./3d` folder.
 The parts are designed to be printed with PLA, but PETG or ABS should also work.
 
+> [!NOTE]  
+> The 3d models are still in development and are not available yet.
+
 ## Person detection
 
 The tiles are supported by a small rubber strip that compresses when you stand on it.
@@ -49,3 +45,16 @@ This compression makes 2 conductive strips touch each other and close the circui
 The ESP32 can detect this and trigger the lights and music.
 
 ![Person detection](./media/sectionview.png)
+
+## Project canvas
+
+![Project canvas](./media/projectcanvas.jpg)
+
+## Team assignments
+
+| Team member | Assignment |
+| ---- | ---------- |
+| @Robbedoes24 | MQTT communication and general tasks |
+| @AlberiekDepreytere | Audio solution |
+| @LucaClrk | Lighting solution |
+| @RubenBelligh | Person Detection |
