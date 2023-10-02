@@ -16,9 +16,9 @@ The tiles are designed to be modular and can be arranged in any configuration yo
 The base of the tiles is 3D printed, all other components are off the shelf parts.
 Below is a list of all the parts used to build 3 tiles.
 
-| Part | Quantity | Price | Link |
+| Part | Quantity | Unit price | Link |
 | ---- | -------- | ----- | ---- |
-| ESP32 (x3) | 1 | €22,99 | [Az-Delivery](https://www.az-delivery.de/nl/products/esp32-dev-kit-c-unverlotet?variant=32437204582496) |
+| ESP32 | 3 | €7,44 | [Mouser](https://www.mouser.be/ProductDetail/Espressif-Systems/ESP32-C3-DevKitC-02?qs=stqOd1AaK7%2F1Q62ysr4CMA%3D%3D&_gl=1*1in80jf*_ga*ODM4MDUyNDAxLjE2OTYyNzI2NDU.*_ga_15W4STQT4T*MTY5NjI3MjY0NS4xLjAuMTY5NjI3MjY0NS42MC4wLjA.) |
 | DC DC Step Down (x3) | 1 | €5,99 | [Az-Delivery](https://www.az-delivery.de/nl/products/lm2596s-dc-dc-step-down-modul-1?variant=12228728324192) |
 | Media player (3x) | 1 | €8,49 | [Az-Delivery](https://www.az-delivery.de/nl/products/mp3-player-modul?variant=8198615695456) |
 | Speaker (6x) | 1 | €13,99 | [Az-Delivery](https://www.az-delivery.de/nl/products/2-stuck-dfplayer-mini-3-watt-8-ohm-mini-lautsprecher-mit-jst-ph2-0-mm-pin-schnittstelle-fur-arduino-raspberry-pi-und-elektronische-diy-projekte-inklusive-e-book?variant=39441379131488) |
