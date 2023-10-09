@@ -1,18 +1,33 @@
 #include <Arduino.h>
 
-// put function declarations here:
-int myFunction(int, int);
+#include <Adafruit_NeoPixel.h>
+#ifdef __AVR__
+  #include <avr/power.h>
+#endif
+#define PIN        25
+#define NUMPIXELS 16
+
+const int arrayPixel[16][4] = {{0,255,255,0},{0,255,0,255},{255,255,255,0},{0,255,255,255},{255,255,255,0},{255,255,0,255},{255,255,255,0},{255,255,255,255},
+{0,255,255,0},{0,255,255,0},{0,255,0,255},{255,255,255,0},{255,255,255,255},{255,255,255,0},{0,255,255,0},{255,255,0,255}};
+
+Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRBW + NEO_KHZ800);
 
 void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+  pixels.begin();
+  pixels.show();
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-}
+ for (int i = 0; i < NUMPIXELS; i++) {
+    uint8_t red = arrayPixel[i][0];
+    uint8_t white = arrayPixel[i][1];
+    uint8_t green = arrayPixel[i][2];
+    uint8_t blue = arrayPixel[i][3];
+    pixels.setPixelColor(i, pixels.Color(red, white,green, blue));
+    pixels.setBrightness(50);
+  }
 
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
+  pixels.show(); // Show the updated colors on the NeoPixels
+
+
 }
