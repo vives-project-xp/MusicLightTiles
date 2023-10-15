@@ -1,36 +1,44 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <PubSubClient.h>
-#include <SRAM.h>
 #include "secret.h"
 
-SRAM sram(4, SRAM_1024);
+const char* device_name = "tile-1";
+const char* rootTopic = "music-light-tiles";
+const char* stateTopic = "state";
+const char* commandTopic = "command";
 
 unsigned long lastMillis = 0;
 unsigned long timeAlive = 0;
-unsigned long cycle = 0;
-const unsigned long interval = 1000; // Send the message every 1 second
+const unsigned long interval = 1000; // Uptime interval in milliseconds
 
 void callback(char* topic, byte* payload, unsigned int length) {
-  sram.seek(1);
-
-  // do something with the message
-  for (uint8_t i = 0; i < length; i++) {
-    Serial.write(sram.read());
+  // Print the topic and payload for debugging purposes
+  Serial.println("Message arrived in topic: " + String(topic));
+  Serial.println("Message: " + String((char*)payload));
+  
+  // Direct message to correct handler
+  if (String(topic) == (String(rootTopic) + "/" + String(device_name) + "/" + String(commandTopic) + "/system")) {
+    // TODO: implement system control
+    Serial.println("System control command received");
+  } else if (String(topic) == (String(rootTopic) + "/" + String(device_name) + "/" + String(commandTopic) + "/audio")) {
+    // TODO: implement audio control
+    Serial.println("Audio control command received");
+  } else if (String(topic) == (String(rootTopic) + "/" + String(device_name) + "/" + String(commandTopic) + "/light")) {
+    // TODO: implement light control
+    Serial.println("light control command received");
+  } else {
+    // Skip commands in unknown topics
+    Serial.println("Command received in unknown topic, skipping...");
   }
-  Serial.println();
-
-  // Reset position for the next message to be stored
-  sram.seek(1);
 }
 
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
 
 void setup() {
+  // Set serial monitor baud rate
   Serial.begin(9600);
-  sram.begin();
-  sram.seek(1);
 
   // Connect to Wi-Fi
   WiFi.begin(ssid, password);
@@ -46,10 +54,10 @@ void setup() {
 
   // Connect to MQTT broker
   while (!client.connected()) {
-    if (client.connect("esp32Client")) {
-      Serial.println("Connected to MQTT broker");
-      client.publish(outTopic, "hello world");
-      client.subscribe(inTopic);
+    if (client.connect(device_name)) { // TODO: implement user/pass and last will (https://pubsubclient.knolleary.net/api#connect) 
+      Serial.println("Connected to MQTT broker as " + String(device_name));
+      // TODO: publish online state (revive last will)
+      client.subscribe((String(rootTopic) + "/" + String(device_name) + "/" + String(commandTopic) + "/#").c_str());
     } else {
       Serial.print("Failed to connect to MQTT broker, retrying in 5 seconds...");
       delay(5000);
@@ -58,14 +66,16 @@ void setup() {
 }
 
 void loop() {
+  // Keep the MQTT connection alive and process incoming messages
   client.loop();
 
-  unsigned long currentMillis = millis();
+  // Create state topic
+  String outTopic = String(rootTopic) + "/" + String(device_name) + "/" + String(stateTopic);
 
-  // increment cycle counter
-  cycle++;
+  // Get the current time
+  unsigned long currentMillis = millis();
   
-  // Check if it's time to send the message
+  // Check if it's time to send new uptime message
   if (currentMillis - lastMillis >= interval) {
     // Save the current time
     lastMillis = currentMillis;
@@ -73,19 +83,14 @@ void loop() {
     // Increment the alive counter
     timeAlive++;
 
-    // Format the message (json)
-    String outMessage = "{\"timeAlive\": " + String(timeAlive) + "}";
-    char outMessageBuffer[50];
-    outMessage.toCharArray(outMessageBuffer, 50);
-
-    // Publish the "outMessage" 
-    if (client.publish(outTopic, outMessageBuffer)) {
-      Serial.println("Message sent");
+    // Publish the "outMessage"
+    if (client.publish((outTopic + "/" + String("uptime")).c_str(), String(timeAlive).c_str())) {
+      Serial.println("Uptime message sent, with value: " + String(timeAlive));
     } else {
-      Serial.println("Failed to send message");
+      Serial.println("Failed to send uptime message");
     }
   }
 
-  // publish current cycle
-  client.publish("musiclighttiles/cycle", String(cycle).c_str());
+  // wait for 10ms (to prevent flooding the broker)
+  delay(10);
 }
