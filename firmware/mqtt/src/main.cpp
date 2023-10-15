@@ -1,6 +1,10 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <PubSubClient.h>
+#include <Audio.h>
+#include <Detect.h>
+#include <Light.h>
+#include <System.h>
 #include "secret.h"
 
 const char* device_name = "tile-1";
