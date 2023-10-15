@@ -16,30 +16,13 @@ unsigned long lastMillis = 0;
 unsigned long timeAlive = 0;
 const unsigned long interval = 1000; // Uptime interval in milliseconds
 
-void callback(char* topic, byte* payload, unsigned int length) {
-  // Print the topic and payload for debugging purposes
-  Serial.println("Message arrived in topic: " + String(topic));
-  Serial.println("Message: " + String((char*)payload));
-  
-  // Direct message to correct handler
-  if (String(topic) == (String(rootTopic) + "/" + String(device_name) + "/" + String(commandTopic) + "/system")) {
-    // TODO: implement system control
-    Serial.println("System control command received");
-  } else if (String(topic) == (String(rootTopic) + "/" + String(device_name) + "/" + String(commandTopic) + "/audio")) {
-    // TODO: implement audio control
-    Serial.println("Audio control command received");
-  } else if (String(topic) == (String(rootTopic) + "/" + String(device_name) + "/" + String(commandTopic) + "/light")) {
-    // TODO: implement light control
-    Serial.println("light control command received");
-  } else {
-    // Skip commands in unknown topics
-    Serial.println("Command received in unknown topic, skipping...");
-  }
-}
-
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
 
+// Forward declaration of callback function
+void callback(char* topic, byte* payload, unsigned int length);
+
+// Setup function
 void setup() {
   // Set serial monitor baud rate
   Serial.begin(9600);
@@ -69,6 +52,7 @@ void setup() {
   }
 }
 
+// Loop function
 void loop() {
   // Keep the MQTT connection alive and process incoming messages
   client.loop();
@@ -97,4 +81,26 @@ void loop() {
 
   // wait for 10ms (to prevent flooding the broker)
   delay(10);
+}
+
+// Callback function
+void callback(char* topic, byte* payload, unsigned int length) {
+  // Print the topic and payload for debugging purposes
+  Serial.println("Message arrived in topic: " + String(topic));
+  Serial.println("Message: " + String((char*)payload));
+  
+  // Direct message to correct handler
+  if (String(topic) == (String(rootTopic) + "/" + String(device_name) + "/" + String(commandTopic) + "/system")) {
+    // TODO: implement system control
+    Serial.println("System control command received");
+  } else if (String(topic) == (String(rootTopic) + "/" + String(device_name) + "/" + String(commandTopic) + "/audio")) {
+    // TODO: implement audio control
+    Serial.println("Audio control command received");
+  } else if (String(topic) == (String(rootTopic) + "/" + String(device_name) + "/" + String(commandTopic) + "/light")) {
+    // TODO: implement light control
+    Serial.println("light control command received");
+  } else {
+    // Skip commands in unknown topics
+    Serial.println("Command received in unknown topic, skipping...");
+  }
 }
