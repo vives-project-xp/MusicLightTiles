@@ -1,7 +1,17 @@
 #include "Detect.h"
 
 Detect::Detect() {
-  // TODO: Implement constructor
+  // Set default values
+  this->detected = false;
 }
 
-// Rest of the class implementation
+String Detect::SerializeOutput() {
+  Serial.println("Serializing output");
+  // TODO: Implement serialization
+  return "{\"hello\":\"world\"}";
+}
+
+void Detect::UpdateState() {
+  Serial.println("Updating state");
+  // TODO: Implement state update
+}
