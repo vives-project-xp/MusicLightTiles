@@ -4,13 +4,19 @@
 #include <Tile.h>
 #include "secret.h"
 
-const char* device_name = "tile-1";
 const char* rootTopic = "music-light-tiles";
 const char* stateTopic = "state";
 const char* commandTopic = "command";
 
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
+
+// Define global constants
+#define FW_VERSION "1.0.0"
+#define HW_VERSION "1.0.0"
+
+// Declare global variables
+char* device_name;
 
 // Create objects of tile class
 Tile tile;
@@ -20,8 +26,14 @@ void callback(char* topic, byte* payload, unsigned int length);
 
 // Setup function
 void setup() {
-  // Set serial monitor baud rate
+  // Set device name
+  device_name = "Tile-1"; // TODO: implement random number generator and check if name is already in use
+
+  // Set serial monitor baud rate for debugging purposes
   Serial.begin(9600);
+
+  // Set device name as hostname
+  WiFi.setHostname(device_name);
 
   // Connect to Wi-Fi
   WiFi.begin(ssid, password);
