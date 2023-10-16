@@ -1,9 +1,6 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <PubSubClient.h>
-#include <Audio.h>
-#include <Detect.h>
-#include <Light.h>
 #include <Tile.h>
 #include "secret.h"
 
@@ -12,17 +9,10 @@ const char* rootTopic = "music-light-tiles";
 const char* stateTopic = "state";
 const char* commandTopic = "command";
 
-unsigned long lastMillis = 0;
-unsigned long timeAlive = 0;
-const unsigned long interval = 1000; // Uptime interval in milliseconds
-
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
 
-// Create objects of the classes
-Audio audio;
-Detect detect;
-Light light;
+// Create objects of tile class
 Tile tile;
 
 // Forward declaration of callback function
@@ -50,17 +40,14 @@ void setup() {
     if (client.connect(device_name)) { // TODO: implement user/pass and last will (https://pubsubclient.knolleary.net/api#connect) 
       Serial.println("Connected to MQTT broker as " + String(device_name));
       // TODO: publish online state (revive last will)
-      client.subscribe((String(rootTopic) + "/" + String(device_name) + "/" + String(commandTopic) + "/#").c_str());
+      client.subscribe((String(rootTopic) + "/" + String(device_name) + "/" + String(commandTopic)).c_str());
     } else {
       Serial.print("Failed to connect to MQTT broker, retrying in 5 seconds...");
       delay(5000);
     }
   }
 
-  // Construct the objects
-  audio = Audio();
-  detect = Detect();
-  light = Light();
+  // Construct new tile object
   tile = Tile();
 }
 
@@ -69,23 +56,13 @@ void loop() {
   // Keep the MQTT connection alive and process incoming messages
   client.loop();
 
-  // Update uptime
-  tile.UpdateUptime();
+  // Update tile state
+  tile.updateState();
 
-  // Update class states
-  audio.UpdateState();
-  detect.UpdateState();
-  light.UpdateState();
-  tile.UpdateState();
-
-  // Publish state to MQTT broker (rootTopic/device_name/state/system)
-  client.publish((String(rootTopic) + "/" + String(device_name) + "/" + String(stateTopic) + "/system").c_str(), tile.SerializeOutput().c_str());
-  client.publish((String(rootTopic) + "/" + String(device_name) + "/" + String(stateTopic) + "/audio").c_str(), audio.SerializeOutput().c_str());
-  client.publish((String(rootTopic) + "/" + String(device_name) + "/" + String(stateTopic) + "/light").c_str(), light.SerializeOutput().c_str());
-  client.publish((String(rootTopic) + "/" + String(device_name) + "/" + String(stateTopic) + "/detect").c_str(), detect.SerializeOutput().c_str());
-
-  // wait for 10ms (to prevent flooding the broker)
-  delay(10);
+  // Publish tile state to MQTT broker if state has changed
+  if (tile.stateChanged()) {
+   client.publish((String(rootTopic) + "/" + String(device_name) + "/" + String(stateTopic)).c_str(), tile.serializeOutput().c_str());
+  }
 }
 
 // Callback function
@@ -93,19 +70,9 @@ void callback(char* topic, byte* payload, unsigned int length) {
   // Print the topic and payload for debugging purposes
   Serial.println("Message arrived in topic: " + String(topic));
   Serial.println("Message: " + String((char*)payload));
+
+  // TODO: Validate payload
   
-  // Direct message to correct handler
-  if (String(topic) == (String(rootTopic) + "/" + String(device_name) + "/" + String(commandTopic) + "/system")) {
-    tile.DeserializeInput((char*)payload, length);
-    Serial.println("System control command received");
-  } else if (String(topic) == (String(rootTopic) + "/" + String(device_name) + "/" + String(commandTopic) + "/audio")) {
-    audio.DeserializeInput((char*)payload, length);
-    Serial.println("Audio control command received");
-  } else if (String(topic) == (String(rootTopic) + "/" + String(device_name) + "/" + String(commandTopic) + "/light")) {
-    light.DeserializeInput((char*)payload, length);
-    Serial.println("light control command received");
-  } else {
-    // Skip commands in unknown topics
-    Serial.println("Command received in unknown topic, skipping...");
-  }
+  // Pass the message to the tile object
+  tile.deserializeInput(topic, payload, length);
 }
