@@ -85,6 +85,12 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
   // TODO: Validate payload
   
-  // Pass the message to the tile object
-  tile.deserializeInput(topic, payload, length);
+  // Pass the message to the tile object if the topic equals the command topic
+  if (String(topic) == String(rootTopic) + "/" + String(device_name) + "/" + String(commandTopic)){
+    tile.deserializeInput(payload, length);
+  }
+  else {
+    // Ignore message if topic doesn't equal the command topic
+    Serial.println("Recieved message for unknown topic: " + String(topic) + ", ignoring...");
+  }
 }
