@@ -4,7 +4,7 @@
 #include <Audio.h>
 #include <Detect.h>
 #include <Light.h>
-#include <System.h>
+#include <Tile.h>
 #include "secret.h"
 
 const char* device_name = "tile-1";
@@ -18,6 +18,12 @@ const unsigned long interval = 1000; // Uptime interval in milliseconds
 
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
+
+// Create objects of the classes
+Audio audio;
+Detect detect;
+Light light;
+Tile tile;
 
 // Forward declaration of callback function
 void callback(char* topic, byte* payload, unsigned int length);
@@ -50,6 +56,12 @@ void setup() {
       delay(5000);
     }
   }
+
+  // Construct the objects
+  audio = Audio();
+  detect = Detect();
+  light = Light();
+  tile = Tile();
 }
 
 // Loop function
@@ -57,27 +69,20 @@ void loop() {
   // Keep the MQTT connection alive and process incoming messages
   client.loop();
 
-  // Create state topic
-  String outTopic = String(rootTopic) + "/" + String(device_name) + "/" + String(stateTopic);
+  // Update uptime
+  tile.UpdateUptime();
 
-  // Get the current time
-  unsigned long currentMillis = millis();
-  
-  // Check if it's time to send new uptime message
-  if (currentMillis - lastMillis >= interval) {
-    // Save the current time
-    lastMillis = currentMillis;
+  // Update class states
+  audio.UpdateState();
+  detect.UpdateState();
+  light.UpdateState();
+  tile.UpdateState();
 
-    // Increment the alive counter
-    timeAlive++;
-
-    // Publish the "outMessage"
-    if (client.publish((outTopic + "/" + String("uptime")).c_str(), String(timeAlive).c_str())) {
-      Serial.println("Uptime message sent, with value: " + String(timeAlive));
-    } else {
-      Serial.println("Failed to send uptime message");
-    }
-  }
+  // Publish state to MQTT broker (rootTopic/device_name/state/system)
+  client.publish((String(rootTopic) + "/" + String(device_name) + "/" + String(stateTopic) + "/system").c_str(), tile.SerializeOutput().c_str());
+  client.publish((String(rootTopic) + "/" + String(device_name) + "/" + String(stateTopic) + "/audio").c_str(), audio.SerializeOutput().c_str());
+  client.publish((String(rootTopic) + "/" + String(device_name) + "/" + String(stateTopic) + "/light").c_str(), light.SerializeOutput().c_str());
+  client.publish((String(rootTopic) + "/" + String(device_name) + "/" + String(stateTopic) + "/detect").c_str(), detect.SerializeOutput().c_str());
 
   // wait for 10ms (to prevent flooding the broker)
   delay(10);
@@ -91,13 +96,13 @@ void callback(char* topic, byte* payload, unsigned int length) {
   
   // Direct message to correct handler
   if (String(topic) == (String(rootTopic) + "/" + String(device_name) + "/" + String(commandTopic) + "/system")) {
-    // TODO: implement system control
+    tile.DeserializeInput((char*)payload, length);
     Serial.println("System control command received");
   } else if (String(topic) == (String(rootTopic) + "/" + String(device_name) + "/" + String(commandTopic) + "/audio")) {
-    // TODO: implement audio control
+    audio.DeserializeInput((char*)payload, length);
     Serial.println("Audio control command received");
   } else if (String(topic) == (String(rootTopic) + "/" + String(device_name) + "/" + String(commandTopic) + "/light")) {
-    // TODO: implement light control
+    light.DeserializeInput((char*)payload, length);
     Serial.println("light control command received");
   } else {
     // Skip commands in unknown topics
