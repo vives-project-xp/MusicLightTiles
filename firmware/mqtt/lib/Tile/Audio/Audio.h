@@ -7,11 +7,11 @@
 
 class Audio {
   public:
+    // Methods
     Audio();
-    void DeserializeInput(char* payload, unsigned int length);
-    String SerializeOutput();
-    void UpdateState();
+  
   private:
+    // Atributes
     bool playing;
     String sound;
     int volume;

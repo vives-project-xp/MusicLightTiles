@@ -11,33 +11,25 @@ Tile::Tile() {
   this->sounds = new String[3] {""};
 }
 
-void Tile::DeserializeInput(char* payload, unsigned int length) {
+void Tile::deserializeInput(char* topic, byte* payload, unsigned int length) {
   Serial.println("Deserializing input");
   // TODO: Implement deserialization
-  this->UpdateState();
+  this->updateState();
 }
 
-String Tile::SerializeOutput() {
+String Tile::serializeOutput() {
   Serial.println("Serializing output");
   // TODO: Implement serialization
   return "{\"hello\":\"world\"}";
 }
 
-void Tile::UpdateState() {
+void Tile::updateState() {
   Serial.println("Updating state");
   // TODO: Implement state update
 }
 
-void Tile::UpdateUptime() {
-  Serial.println("Updating uptime");
-
-  // Get current time
-  unsigned long currentUptime = millis();
-
-  // Check if 1 second has passed
-  if (currentUptime - this->lastUptime >= 1000) {
-    // Update uptime
-    this->uptime += 1;
-    this->lastUptime = currentUptime;
-  }
+bool Tile::stateChanged() {
+  Serial.println("Checking if state changed");
+  // TODO: Implement state change check
+  return false;
 }

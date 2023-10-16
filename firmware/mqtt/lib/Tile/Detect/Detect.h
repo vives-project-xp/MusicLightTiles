@@ -7,10 +7,11 @@
 
 class Detect {
   public:
+    // Methods
     Detect();
-    String SerializeOutput();
-    void UpdateState();
+
   private:
+    // Atributes
     bool detected;
 };
 #endif

@@ -10,19 +10,19 @@
 #define MAX_SECTIONS 10
 
 struct Section {
-  int r;
-  int g;
-  int b;
-  int w;
+  int red;
+  int green;
+  int blue;
+  int white;
 };
 
 class Light {
   public:
+    // Methods
     Light();
-    void DeserializeInput(char* payload, unsigned int length);
-    String SerializeOutput();
-    void UpdateState();
+  
   private:
+    // Atributes
     int brightness;
     Section sections[MAX_SECTIONS];
 };
