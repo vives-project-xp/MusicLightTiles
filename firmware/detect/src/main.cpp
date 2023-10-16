@@ -23,6 +23,11 @@ void loop() {
 
   if(buttonState == 1){
       //Turn led on
+      
+
+      //sound on
+
+
 
        //digitalWrite(ledpin,HIGH);
        digitalWrite(Serial.print("haha It works\n"),HIGH);
@@ -37,11 +42,6 @@ void loop() {
       digitalWrite(Serial.print("RIP the leds\n"),LOW);
       
   }
-
-
-  
-
-
 
   if(switchState == 1){
        // Turn on power
