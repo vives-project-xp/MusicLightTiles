@@ -1,17 +1,17 @@
 #include "Tile.h"
 
-Tile::Tile() {
+Tile::Tile(String firmware_version, String hardware_version) {
   // set default values
-  this->reboot = false;
-  this->firmware = "1.0.0";
-  this->hardware = "1.0.0";
-  this->mode = "demo";
-  this->uptime = 0;
-  this->lastUptime = 0;
-  this->sounds = new String[3] {""};
+  this->_reboot = false;
+  this->_firmware = firmware_version;
+  this->_hardware = hardware_version;
+  this->_mode = "mqtt";
+  this->_uptime = 0;
+  this->_lastUptime = 0;
+  this->_sounds = new String[3] {""}; //TODO: get available sounds from audio class
 }
 
-void Tile::deserializeInput(char* topic, byte* payload, unsigned int length) {
+void Tile::deserializeInput(byte* payload, unsigned int length) {
   Serial.println("Deserializing input");
   // TODO: Implement deserialization
   this->updateState();

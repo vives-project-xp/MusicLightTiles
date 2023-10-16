@@ -60,7 +60,7 @@ void setup() {
   }
 
   // Construct new tile object
-  tile = Tile();
+  tile = Tile(FW_VERSION, HW_VERSION);
 }
 
 // Loop function
