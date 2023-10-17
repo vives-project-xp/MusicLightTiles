@@ -38,7 +38,6 @@ This property has the following subproperties:
 | -------- | ---- | ----------- |
 | `firmware` | String | The firmware version of the device. |
 | `hardware` | String | The hardware version of the device. |
-| `mode` | String | The current mode of the device. |
 | `uptime` | Number | The number of seconds the device has been running. |
 | `sounds` | Array | The list od possible sounds the device can play. |
 
@@ -81,7 +80,6 @@ Here is an example of how a full state payload should look.
   "system": {
     "firmware": "1.0.0",
     "hardware": "1.0.0",
-    "mode": "mqtt",
     "uptime": 1234,
     "sounds": ["sound-1", "sound-2", "sound-3"]
   },
@@ -130,7 +128,6 @@ This property has the following subproperties:
 
 | Property | Type | Description |
 | -------- | ---- | ----------- |
-| `mode` | String | The mode to set the device to. |
 | `reboot` | Boolean | Whether the device should reboot or not. |
 
 #### Audio
@@ -161,7 +158,6 @@ Here is an example of how a full command payload should look.
 ```json
 {
   "system": {
-    "mode": "mqtt",
     "reboot": false
   },
   "audio": {
