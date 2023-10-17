@@ -1,39 +1,146 @@
+// Import necessary libraries
 #include <Arduino.h>
 #include <WiFi.h>
 #include <PubSubClient.h>
-#include <Tile.h>
-#include "secret.h"
+#include <ArduinoJson.h>
 
+#include "secret.h" // TODO: implement better way of storing and accessing secrets
+
+// Define pin constants
+const int modeSwitchPin = 4;  // pin for mode switch
+
+// Define MQTT constants
 const char* rootTopic = "music-light-tiles";
 const char* stateTopic = "state";
 const char* commandTopic = "command";
 
+const int uptimeInterval = 1000; // interval in milliseconds to update uptime
+
+// Define device specific constants
+const char* device_name = "tile-1"; // TODO: implement random number generator and check if name is already in use
+const int amount_of_sections = 16;
+const int amount_of_sounds = 3;
+const char* firmware_version = "0.0.2";
+const char* hardware_version = "0.0.1";
+
+// Define mode enum (mode switch)
+enum Mode {
+  DEMO,
+  MQTT
+};
+
+// Define section struct (led section)
+struct Section {
+  int red;
+  int green;
+  int blue;
+  int white;
+};
+
+// Define global objects
+Mode mode = DEMO; // default mode to demo mode
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
 
-// Define global constants
-#define FW_VERSION "0.0.1"
-#define HW_VERSION "0.0.1"
+// Define global variables
+bool reboot = false;
+unsigned long uptime = 0;
+unsigned long lastUptime = 0;
+String state = "";
+String previousState = "";
 
-// Declare global variables
-String device_name;
+bool presence = false;
 
-// Create objects of tile class
-Tile tile(FW_VERSION, HW_VERSION);
-
-// Forward declaration of callback function
+// Function prototypes
+void demo_loop();
+void mqtt_setup();
+void mqtt_loop();
 void callback(char* topic, byte* payload, unsigned int length);
+void updateState();
+void updateUptime();
+void setLights();
+void setAudio();
+bool getPrecense();
+bool stateChanged();
+String serializeState();
 
 // Setup function
 void setup() {
-  // Set device name
-  device_name = "tile-1"; // TODO: implement random number generator and check if name is already in use
+  // Wait for serial monitor to connect
+  delay(1000); // TODO: remove this later
 
   // Set serial monitor baud rate for debugging purposes
   Serial.begin(9600);
 
+  // Initialize the pushbutton pin as an input
+  pinMode(modeSwitchPin, INPUT);
+
+  // Set mode from button state
+  if (digitalRead(modeSwitchPin) == HIGH) { // TODO: no contact defaults to mqtt, but should be demo (but mqtt can't get past connecting to wifi for some reason if demo is default)
+    mode = DEMO;
+  } else {
+    mode = MQTT;
+  }
+
+  // General setup
+  Serial.println("Running general setup...");
+
+  // TODO: Implement general setup
+
+  // Initialise program depending on mode
+  if (mode == DEMO) {
+    // Demo mode doesn't need setup, so do nothing
+    Serial.println("Running demo setup...");
+  } else if (mode == MQTT) {
+    // Run mqtt setup
+    mqtt_setup();
+  } else {
+    // Something went wrong, print error and do nothing
+    Serial.println("Unknown mode, doing nothing...");
+  }
+}
+
+// Loop function
+void loop() {
+  // Run loop depending on mode
+  if (mode == DEMO) {
+    // Run demo loop
+    demo_loop();
+  } else if (mode == MQTT) {
+    // Run mqtt loop
+    mqtt_loop();
+  } else {
+    // Something went wrong, print error and do nothing
+    Serial.println("Unknown mode, doing nothing...");
+  }
+}
+
+// Demo loop function (loop for demo mode)
+void demo_loop() {
+  // If presence is detected
+  if (getPrecense()) {
+    // Set lights
+    setLights();
+
+    // Set audio
+    setAudio();
+  }
+
+  // Wait a little bit (just for testing purposes, remove this later)
+  delay(1000);
+}
+
+// MQTT setup function (setup for MQTT mode)
+void mqtt_setup() {
+  // Run MQTT setup
+  Serial.println("Running MQTT setup...");
+
+  // Set initial state and previous state
+  state = serializeState();
+  previousState = state;
+
   // Set device name as hostname
-  WiFi.setHostname(device_name.c_str());
+  WiFi.setHostname(device_name);
 
   // Connect to Wi-Fi
   WiFi.begin(ssid, password);
@@ -45,57 +152,143 @@ void setup() {
 
   // Update MQTT settings
   client.setBufferSize(1024); // Set MQTT packet buffer size
-
-  // Set MQTT server
   client.setServer(mqtt_server, mqtt_port);
   client.setCallback(callback);
 
   // Connect to MQTT broker
   while (!client.connected()) {
-    if (client.connect(device_name.c_str())) { // TODO: implement user/pass and last will (https://pubsubclient.knolleary.net/api#connect) 
+    if (client.connect(device_name)) { // TODO: implement user/pass and last will (https://pubsubclient.knolleary.net/api#connect)
       Serial.println("Connected to MQTT broker as " + String(device_name));
-      // TODO: publish online state (revive last will)
-      client.publish((String(rootTopic) + "/" + String(device_name) + "/" + String(stateTopic)).c_str(), tile.serializeOutput().c_str());
+      client.publish((String(rootTopic) + "/" + String(device_name) + "/" + String(stateTopic)).c_str(), state.c_str());
       client.subscribe((String(rootTopic) + "/" + String(device_name) + "/" + String(commandTopic)).c_str());
     } else {
-      Serial.print("Failed to connect to MQTT broker, retrying in 5 seconds...");
+      Serial.println("Failed to connect to MQTT broker, retrying in 5 seconds...");
       delay(5000);
     }
   }
 }
 
-// Loop function
-void loop() {
-  // Keep the MQTT connection alive and process incoming messages
+// MQTT loop function (loop for MQTT mode)
+void mqtt_loop() {
+  // Keep the MQTT connection alive look for incoming messages
   client.loop();
 
-  // Update tile uptime
-  tile.updateUptime();
+  // Update uptime
+  updateUptime();
 
-  // Publish tile state to MQTT broker if state has changed
-  if (tile.stateChanged()) {
-    Serial.println("Publishing state to MQTT broker");
-    client.publish((String(rootTopic) + "/" + String(device_name) + "/" + String(stateTopic)).c_str(), tile.state.c_str());
+  // If state has changed, publish new state
+  if (stateChanged()) {
+    client.publish((String(rootTopic) + "/" + String(device_name) + "/" + String(stateTopic)).c_str(), state.c_str());
+    previousState = state;
   }
 
-  // Add delay to prevent esp from crashing
-  //delay(100);
+  // Wait a little bit (just for testing purposes, remove this later)
+  delay(10);
 }
 
-// Callback function
+// MQTT callback function
 void callback(char* topic, byte* payload, unsigned int length) {
   // Print the topic and payload for debugging purposes
   Serial.println("Message arrived in topic: " + String(topic));
   Serial.println("Message: " + String((char*)payload));
 
   // TODO: Validate payload
-  
-  // Pass the message to the tile object if the topic equals the command topic
-  if (String(topic) == String(rootTopic) + "/" + String(device_name) + "/" + String(commandTopic)){
-    tile.deserializeInput(payload, length);
+
+  // TODO: Implement payload deserialization
+
+  updateState();
+}
+
+// Update state function (sets lights and audio to current state and calls serializeState function)
+void updateState() {
+  // Update state
+  Serial.println("Updating state...");
+
+  // Set lights
+  setLights();
+
+  // Set audio
+  setAudio();
+
+  // Update current state
+  state = serializeState();
+}
+
+// Update uptime function (updates uptime and calls serializeState function)
+void updateUptime() {
+  // Update uptime (add 1 for every interval)
+  unsigned long currentMillis = millis();
+  if (currentMillis - lastUptime >= uptimeInterval) {
+    uptime++;
+    lastUptime = currentMillis;
+
+    // Update current state
+    state = serializeState();
   }
-  else {
-    // Ignore message if topic doesn't equal the command topic
-    Serial.println("Recieved message for unknown topic: " + String(topic) + ", ignoring...");
+}
+
+// Set lights state function
+void setLights() {
+  // TODO: Implement setSectionState function
+  Serial.println("Setting LED Section state...");
+}
+
+// Set audio state function
+void setAudio() {
+  // TODO: Implement setAudio function
+  Serial.println("Setting audio state...");
+}
+
+// Get detect state function (is someone standing on the tile?)
+bool getPrecense() {
+  // TODO: Implement getDetect function
+  Serial.println("Getting detect state...");
+  return false;
+}
+
+// StateChanged function (checks if state has changed from last time and returns true if it has)
+bool stateChanged() {
+  if (state != previousState) {
+    return true;
+  } else {
+    return false;
   }
+}
+
+// Serialize state function (serializes current state to JSON)
+String serializeState() {
+  StaticJsonDocument<2048> doc;
+
+  JsonObject system = doc.createNestedObject("system");
+  system["firmware"] = firmware_version;
+  system["hardware"] = hardware_version;
+  system["uptime"] = uptime;
+
+  JsonArray system_sounds = system.createNestedArray("sounds");
+  system_sounds.add("sound-1"); // TODO: Pass real values
+  system_sounds.add("sound-2"); // TODO: Pass real values
+  system_sounds.add("sound-3"); // TODO: Pass real values
+
+  JsonObject audio = doc.createNestedObject("audio");
+  audio["playing"] = true;  // TODO: Pass real values
+  audio["sound"] = "sound-1"; // TODO: Pass real values
+  audio["volume"] = 50; // TODO: Pass real values
+
+  JsonObject light = doc.createNestedObject("light");
+  light["brightness"] = 50; // TODO: Pass real values
+
+  JsonArray light_sections = light.createNestedArray("sections");
+  for (int i = 0; i < amount_of_sections; i++) {
+    JsonObject section = light_sections.createNestedObject();
+    section["red"] = 0; // TODO: Pass real values
+    section["green"] = 0; // TODO: Pass real values
+    section["blue"] = 0; // TODO: Pass real values
+    section["white"] = 0; // TODO: Pass real values
+  }
+
+  doc["detect"]["detected"] = true; // TODO: Pass real values
+
+  String output;
+  serializeJson(doc, output);
+  return output;
 }
