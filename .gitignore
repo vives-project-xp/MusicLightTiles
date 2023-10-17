@@ -1,2 +1,51 @@
-# Ignore drawio temp files
+# PlatformIO
+.pioenvs
+.piolibdeps
+.clang_complete
+.gcc-flags.json
+.pio
+
+# Visual Studio Code
+## General
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+## Local History for Visual Studio Code
+.history/
+## Built Visual Studio Code Extensions
+*.vsix
+
+# Draw.io
 *.drawio.bkp
+*.drawio.dtmp
+
+# Node.js
+## Logs
+logs
+*.log
+npm-debug.log*
+.pnpm-debug.log*
+## Diagnostic reports (https://nodejs.org/api/report.html)
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+## Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+## Dependency directories
+node_modules/
+## TypeScript cache
+*.tsbuildinfo
+## Optional eslint cache
+.eslintcache
+## Optional stylelint cache
+.stylelintcache
+
+# dotenv environment variable files
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
