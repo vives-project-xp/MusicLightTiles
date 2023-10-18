@@ -200,9 +200,13 @@ void callback(char* topic, byte* payload, unsigned int length) {
   Serial.println("Message arrived in topic: " + String(topic));
   Serial.println("Message: " + String((char*)payload));
 
-  // TODO: Validate payload
+  // Validate topic
+  if (String(topic) != String(rootTopic) + "/" + String(device_name) + "/" + String(commandTopic)) {
+    Serial.println("Invalid topic, ignoring message...");
+    return;
+  }
 
-  // TODO: Implement payload deserialization
+  // Deserialize JSON
   StaticJsonDocument<1536> doc;
   DeserializationError error = deserializeJson(doc, payload, length);
 
@@ -216,7 +220,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
   JsonObject audio = doc["audio"];
   play = audio["play"];
-  //sound = audio["sound"];
+  sound = (const char*)audio["sound"];
   volume = audio["volume"];
 
   brightness = doc["light"]["brightness"];
