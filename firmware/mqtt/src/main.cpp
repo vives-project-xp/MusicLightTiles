@@ -17,10 +17,9 @@ const char* commandTopic = "command";
 const int uptimeInterval = 1000; // interval in milliseconds to update uptime
 
 // Define device specific constants
-const char* device_name = "tile-1"; // TODO: implement random number generator and check if name is already in use
 const int amount_of_sections = 16;
 const int amount_of_sounds = 3;
-const char* firmware_version = "0.0.2";
+const char* firmware_version = "0.0.3";
 const char* hardware_version = "0.0.1";
 
 // Define mode enum (mode switch)
@@ -43,6 +42,8 @@ WiFiClient wifiClient;
 PubSubClient client(wifiClient);
 
 // Define global variables
+String device_name = "tile";
+
 bool reboot = false;
 unsigned long uptime = 0;
 unsigned long lastUptime = 0;
@@ -175,16 +176,21 @@ void mqtt_setup() {
   // Run MQTT setup
   Serial.println("Running MQTT setup...");
 
-  // Set device name as hostname
-  WiFi.setHostname(device_name);
+  // Set device name to mac address of ESP32
+  String mac = WiFi.macAddress();
+  mac.replace(":", "");
+  device_name = mac;
+
+  // Connect to Wi-Fi as default device name
+  WiFi.setHostname(device_name.c_str());
 
   // Connect to Wi-Fi
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
-    Serial.println("Connecting to WiFi...");
+    Serial.println("Connecting to WiFi as " + device_name + "...");
   }
-  Serial.println("Connected to WiFi");
+  Serial.println("Connected to WiFi as " + device_name);
 
   // Update MQTT settings
   client.setBufferSize(1024); // Set MQTT packet buffer size
