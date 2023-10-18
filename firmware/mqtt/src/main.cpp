@@ -193,10 +193,12 @@ void mqtt_setup() {
 
   // Connect to MQTT broker
   while (!client.connected()) {
-    if (client.connect(device_name)) { // TODO: implement user/pass and last will (https://pubsubclient.knolleary.net/api#connect)
+    if (client.connect(device_name.c_str(), mqtt_user, mqtt_password, (String(rootTopic) + "/" + String(device_name)).c_str(), 1, true, String("OFFLINE").c_str())) {
       Serial.println("Connected to MQTT broker as " + String(device_name));
+      client.publish((String(rootTopic) + "/" + String(device_name)).c_str(), String("ONLINE").c_str());
       client.publish((String(rootTopic) + "/" + String(device_name) + "/" + String(stateTopic)).c_str(), serializeState().c_str());
       client.subscribe((String(rootTopic) + "/" + String(device_name) + "/" + String(commandTopic)).c_str());
+      Serial.println("Connected to MQTT broker as " + String(device_name));
     } else {
       Serial.println("Failed to connect to MQTT broker, retrying in 5 seconds...");
       delay(5000);
