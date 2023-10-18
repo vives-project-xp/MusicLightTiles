@@ -211,6 +211,11 @@ void mqtt_setup() {
 
 // MQTT loop function (loop for MQTT mode)
 void mqtt_loop() {
+  // If not connected to MQTT broker or Wi-Fi, reconnect
+  if (!client.connected() || !WiFi.isConnected()) {
+    mqtt_setup();
+  }
+
   // Keep the MQTT connection alive look for incoming messages
   client.loop();
 
