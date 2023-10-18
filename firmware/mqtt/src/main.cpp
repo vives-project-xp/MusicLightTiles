@@ -221,6 +221,8 @@ void mqtt_loop() {
 
   // If reboot is true, reboot
   if (reboot) {
+    Serial.println("Rebooting...");
+    client.publish((String(rootTopic) + "/" + String(device_name)).c_str(), String("OFFLINE").c_str());
     ESP.restart();
   }
 
