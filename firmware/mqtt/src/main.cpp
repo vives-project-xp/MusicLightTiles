@@ -46,18 +46,22 @@ PubSubClient client(wifiClient);
 bool reboot = false;
 unsigned long uptime = 0;
 unsigned long lastUptime = 0;
-String state = "";
-String previousState = "";
 String sounds[amount_of_sounds] = {String("")};
 
 bool presence = false;
+bool previous_presence = false;
 
 bool play = false;
+bool previous_play = false;
 String sound = "";
+String previous_sound = "";
 int volume = 0;
+int previous_volume = 0;
 
 int brightness = 0;
+int previous_brightness = 0;
 Section sections[amount_of_sections] = {Section{0, 0, 0, 0}};
+Section previous_sections[amount_of_sections] = {Section{0, 0, 0, 0}};
 
 // Function prototypes
 void demo_loop();
@@ -65,11 +69,10 @@ void mqtt_setup();
 void mqtt_loop();
 void callback(char* topic, byte* payload, unsigned int length);
 void updateState();
-void updateUptime();
-void setLights();
-void setAudio();
-bool getPresence();
-bool stateChanged();
+bool updateUptime();
+bool updatePresence();
+bool updateAudio();
+bool updateLights();
 String serializeState();
 
 // Setup function
@@ -125,35 +128,42 @@ void loop() {
 
 // Demo loop function (loop for demo mode)
 void demo_loop() {
-  // If presence is detected
-  if (getPresence()) {
-    // Fill sections with the color red
-    for (int i = 0; i < amount_of_sections; i++) {
-      sections[i].red = 255;
-      sections[i].green = 0;
-      sections[i].blue = 0;
-      sections[i].white = 0;
+  // Update presence
+  bool presenceChanged = updatePresence();
+
+  // If presence has changed
+  if (presenceChanged) {
+    // If presence is true
+    if (presence) {
+      // Fill sections with the color green
+      for (int i = 0; i < amount_of_sections; i++) {
+        sections[i].red = 0;
+        sections[i].green = 255;
+        sections[i].blue = 0;
+        sections[i].white = 0;
+      }
+
+      // Update lights
+      updateLights();
+
+      // Set audio
+      updateAudio();
+
+    } else {
+      // Fill sections with the color red
+      for (int i = 0; i < amount_of_sections; i++) {
+        sections[i].red = 255;
+        sections[i].green = 0;
+        sections[i].blue = 0;
+        sections[i].white = 0;
+      }
+
+      // Update lights
+      updateLights();
+
+      // Set audio
+      updateAudio();
     }
-
-    // Set lights
-    setLights();
-
-    // Set audio
-    setAudio();
-  } else {
-    // Fill sections with the color black
-    for (int i = 0; i < amount_of_sections; i++) {
-      sections[i].red = 0;
-      sections[i].green = 0;
-      sections[i].blue = 0;
-      sections[i].white = 0;
-    }
-
-    // Set lights
-    setLights();
-
-    // Set audio
-    setAudio();
   }
 
   // Wait a little bit (just for testing purposes, remove this later)
@@ -164,10 +174,6 @@ void demo_loop() {
 void mqtt_setup() {
   // Run MQTT setup
   Serial.println("Running MQTT setup...");
-
-  // Set initial state and previous state
-  state = serializeState();
-  previousState = state;
 
   // Set device name as hostname
   WiFi.setHostname(device_name);
@@ -189,7 +195,7 @@ void mqtt_setup() {
   while (!client.connected()) {
     if (client.connect(device_name)) { // TODO: implement user/pass and last will (https://pubsubclient.knolleary.net/api#connect)
       Serial.println("Connected to MQTT broker as " + String(device_name));
-      client.publish((String(rootTopic) + "/" + String(device_name) + "/" + String(stateTopic)).c_str(), state.c_str());
+      client.publish((String(rootTopic) + "/" + String(device_name) + "/" + String(stateTopic)).c_str(), serializeState().c_str());
       client.subscribe((String(rootTopic) + "/" + String(device_name) + "/" + String(commandTopic)).c_str());
     } else {
       Serial.println("Failed to connect to MQTT broker, retrying in 5 seconds...");
@@ -203,13 +209,26 @@ void mqtt_loop() {
   // Keep the MQTT connection alive look for incoming messages
   client.loop();
 
+  // If reboot is true, reboot
+  if (reboot) {
+    ESP.restart();
+  }
+
   // Update uptime
-  updateUptime();
+  bool uptimeChanged = updateUptime();
+
+  // Update audio
+  bool audioChanged = updateAudio();
+
+  // Update lights
+  bool lightsChanged = updateLights();
+
+  // Update presence
+  bool presenceChanged = updatePresence();
 
   // If state has changed, publish new state
-  if (stateChanged()) {
-    client.publish((String(rootTopic) + "/" + String(device_name) + "/" + String(stateTopic)).c_str(), state.c_str());
-    previousState = state;
+  if (uptimeChanged  || audioChanged || lightsChanged || presenceChanged) {
+    client.publish((String(rootTopic) + "/" + String(device_name) + "/" + String(stateTopic)).c_str(), serializeState().c_str());
   }
 
   // Wait a little bit (just for testing purposes, remove this later)
@@ -255,67 +274,76 @@ void callback(char* topic, byte* payload, unsigned int length) {
     sections[i].blue = section["b"];
     sections[i].white = section["w"];
   }
-
-  updateState();
 }
 
-// Update state function (sets lights and audio to current state and calls serializeState function)
-void updateState() {
-  // Update state
-  Serial.println("Updating state...");
-
-  // Reboot if needed
-  if (reboot) {
-    ESP.restart();
-  }
-
-  // Set lights
-  setLights();
-
-  // Set audio
-  setAudio();
-
-  // Update current state
-  state = serializeState();
-}
-
-// Update uptime function (updates uptime and calls serializeState function)
-void updateUptime() {
-  // Update uptime (add 1 for every interval)
+// Update uptime function
+bool updateUptime() {
+  // Get current millis
   unsigned long currentMillis = millis();
+  // If current millis - last uptime is greater than uptime interval
   if (currentMillis - lastUptime >= uptimeInterval) {
+    // Update uptime
     uptime++;
+    // Update last uptime
     lastUptime = currentMillis;
-
-    // Update current state
-    state = serializeState();
-  }
-}
-
-// Set lights state function
-void setLights() {
-  // TODO: Implement setSectionState function
-  Serial.println("Setting LED Section state...");
-}
-
-// Set audio state function
-void setAudio() {
-  // TODO: Implement setAudio function
-  Serial.println("Setting audio state...");
-}
-
-// Get detect state function (is someone standing on the tile?)
-bool getPresence() {
-  // TODO: Implement getDetect function
-  Serial.println("Getting detect state...");
-  return false;
-}
-
-// StateChanged function (checks if state has changed from last time and returns true if it has)
-bool stateChanged() {
-  if (state != previousState) {
+    // State has changed, return true
     return true;
   } else {
+    // State hasn't changed, return false
+    return false;
+  }
+}
+
+// Update presence function
+bool updatePresence() {
+  // Update presence
+  presence = false; // TODO: implement presence detection
+  // If presence has changed
+  if (presence != previous_presence) {
+    // Update previous presence
+    previous_presence = presence;
+    // State has changed, return true
+    return true;
+  } else {
+    // State hasn't changed, return false
+    return false;
+  }
+}
+
+// Update audio function
+bool updateAudio() {
+  if (play != previous_play || sound != previous_sound || volume != previous_volume) {
+
+    // Set audio to new values
+    Serial.println("Updating audio...");
+
+    // Update previous values
+    previous_play = play;
+    previous_sound = sound;
+    previous_volume = volume;
+    // State has changed, return true
+    return true;
+  } else {
+    // Nothing has changed, return false
+    return false;
+  }
+}
+
+// Update lights function
+bool updateLights() {
+  // If brightness has changed or sections have changed (value in sections is different from previous value in sections)
+  if (brightness != previous_brightness || memcmp(sections, previous_sections, sizeof(sections)) != 0) {
+
+    // Set lights to new values
+    Serial.println("Updating lights...");
+
+    // Update previous values
+    previous_brightness = brightness;
+    memcpy(previous_sections, sections, sizeof(sections));
+    // State has changed, return true
+    return true;
+  } else {
+    // Nothing has changed, return false
     return false;
   }
 }
