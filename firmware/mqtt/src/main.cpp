@@ -48,8 +48,16 @@ unsigned long uptime = 0;
 unsigned long lastUptime = 0;
 String state = "";
 String previousState = "";
+String sounds[amount_of_sounds] = {String("")};
 
 bool presence = false;
+
+bool play = false;
+String sound = "";
+int volume = 0;
+
+int brightness = 0;
+Section sections[amount_of_sections] = {Section{0, 0, 0, 0}};
 
 // Function prototypes
 void demo_loop();
@@ -195,6 +203,32 @@ void callback(char* topic, byte* payload, unsigned int length) {
   // TODO: Validate payload
 
   // TODO: Implement payload deserialization
+  StaticJsonDocument<1536> doc;
+  DeserializationError error = deserializeJson(doc, payload, length);
+
+  if (error) {
+    Serial.print("deserializeJson() failed: ");
+    Serial.println(error.c_str());
+    return;
+  }
+
+  reboot = doc["system"]["reboot"];
+
+  JsonObject audio = doc["audio"];
+  play = audio["play"];
+  //sound = audio["sound"];
+  volume = audio["volume"];
+
+  brightness = doc["light"]["brightness"];
+
+  JsonArray light_sections = doc["light"]["sections"];
+  for (int i = 0; i < amount_of_sections; i++) {
+    JsonObject section = light_sections[i];
+    sections[i].red = section["r"];
+    sections[i].green = section["g"];
+    sections[i].blue = section["b"];
+    sections[i].white = section["w"];
+  }
 
   updateState();
 }
@@ -203,6 +237,11 @@ void callback(char* topic, byte* payload, unsigned int length) {
 void updateState() {
   // Update state
   Serial.println("Updating state...");
+
+  // Reboot if needed
+  if (reboot) {
+    ESP.restart();
+  }
 
   // Set lights
   setLights();
@@ -265,28 +304,28 @@ String serializeState() {
   system["uptime"] = uptime;
 
   JsonArray system_sounds = system.createNestedArray("sounds");
-  system_sounds.add("sound-1"); // TODO: Pass real values
-  system_sounds.add("sound-2"); // TODO: Pass real values
-  system_sounds.add("sound-3"); // TODO: Pass real values
+  for (int i = 0; i < amount_of_sounds; i++) {
+    system_sounds.add(sounds[i]);
+  }
 
   JsonObject audio = doc.createNestedObject("audio");
-  audio["playing"] = true;  // TODO: Pass real values
-  audio["sound"] = "sound-1"; // TODO: Pass real values
-  audio["volume"] = 50; // TODO: Pass real values
+  audio["playing"] = play;
+  audio["sound"] = sound;
+  audio["volume"] = volume;
 
   JsonObject light = doc.createNestedObject("light");
-  light["brightness"] = 50; // TODO: Pass real values
+  light["brightness"] = brightness;
 
   JsonArray light_sections = light.createNestedArray("sections");
   for (int i = 0; i < amount_of_sections; i++) {
     JsonObject section = light_sections.createNestedObject();
-    section["red"] = 0; // TODO: Pass real values
-    section["green"] = 0; // TODO: Pass real values
-    section["blue"] = 0; // TODO: Pass real values
-    section["white"] = 0; // TODO: Pass real values
+    section["r"] = sections[i].red;
+    section["g"] = sections[i].green;
+    section["b"] = sections[i].blue;
+    section["w"] = sections[i].white;
   }
 
-  doc["detect"]["detected"] = true; // TODO: Pass real values
+  doc["detect"]["detected"] = presence;
 
   String output;
   serializeJson(doc, output);
