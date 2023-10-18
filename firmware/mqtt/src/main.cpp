@@ -68,7 +68,7 @@ void updateState();
 void updateUptime();
 void setLights();
 void setAudio();
-bool getPrecense();
+bool getPresence();
 bool stateChanged();
 String serializeState();
 
@@ -126,7 +126,7 @@ void loop() {
 // Demo loop function (loop for demo mode)
 void demo_loop() {
   // If presence is detected
-  if (getPrecense()) {
+  if (getPresence()) {
     // Fill sections with the color red
     for (int i = 0; i < amount_of_sections; i++) {
       sections[i].red = 255;
@@ -305,7 +305,7 @@ void setAudio() {
 }
 
 // Get detect state function (is someone standing on the tile?)
-bool getPrecense() {
+bool getPresence() {
   // TODO: Implement getDetect function
   Serial.println("Getting detect state...");
   return false;
