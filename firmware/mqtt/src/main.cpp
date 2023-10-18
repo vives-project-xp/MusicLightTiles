@@ -78,9 +78,6 @@ String serializeState();
 
 // Setup function
 void setup() {
-  // Wait for serial monitor to connect
-  delay(1000); // TODO: remove this later
-
   // Set serial monitor baud rate for debugging purposes
   Serial.begin(9600);
 
@@ -292,6 +289,7 @@ bool updateUptime() {
   if (currentMillis - lastUptime >= uptimeInterval) {
     // Update uptime
     uptime++;
+    Serial.println("Updating uptime...");
     // Update last uptime
     lastUptime = currentMillis;
     // State has changed, return true
@@ -323,6 +321,7 @@ bool updateAudio() {
   if (play != previous_play || sound != previous_sound || volume != previous_volume) {
 
     // Set audio to new values
+    // TODO: implement audio
     Serial.println("Updating audio...");
 
     // Update previous values
@@ -343,6 +342,7 @@ bool updateLights() {
   if (brightness != previous_brightness || memcmp(sections, previous_sections, sizeof(sections)) != 0) {
 
     // Set lights to new values
+    // TODO: implement lights
     Serial.println("Updating lights...");
 
     // Update previous values
