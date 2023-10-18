@@ -127,6 +127,28 @@ void loop() {
 void demo_loop() {
   // If presence is detected
   if (getPrecense()) {
+    // Fill sections with the color red
+    for (int i = 0; i < amount_of_sections; i++) {
+      sections[i].red = 255;
+      sections[i].green = 0;
+      sections[i].blue = 0;
+      sections[i].white = 0;
+    }
+
+    // Set lights
+    setLights();
+
+    // Set audio
+    setAudio();
+  } else {
+    // Fill sections with the color black
+    for (int i = 0; i < amount_of_sections; i++) {
+      sections[i].red = 0;
+      sections[i].green = 0;
+      sections[i].blue = 0;
+      sections[i].white = 0;
+    }
+
     // Set lights
     setLights();
 
