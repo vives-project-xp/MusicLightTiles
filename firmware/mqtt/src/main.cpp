@@ -288,6 +288,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
 }
 
+// TODO: only send uptime changes when something else changes (not every second)
 // Update uptime function
 bool updateUptime() {
   // Get current millis
