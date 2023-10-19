@@ -59,7 +59,7 @@ This property has the following subproperties:
 
 | Property | Type | Description |
 | -------- | ---- | ----------- |
-| `brightness` | Number | The brightness of the device. |
+| `brightness` | Number | The brightness of the device. 1 is the lowest brightness and 255 is just below the highest brightness. 0 is the highest brightness. |
 | `sections` | Array | The list of colors of each section, should have a format of {r: 0, g: 0, b: 0, w:0} for each section. |
 
 #### Detect
