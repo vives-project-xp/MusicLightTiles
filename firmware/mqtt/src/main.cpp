@@ -9,6 +9,7 @@
 
 // Define pin constants
 #define MODE_SWITCH_PIN 4  // pin for mode switch
+#define PRESENCE_PIN 16    // pin for presence detection
 #define LEDSTRIP_PIN 25    // pin for led strip
 
 // Define MQTT constants
@@ -96,6 +97,8 @@ void setup() {
 
   // General setup
   Serial.println("Running general setup...");
+  // Setup presence detection
+  pinMode(PRESENCE_PIN, INPUT);
   // Setup led strip (set leds to off)
   ledstrip.begin();
   ledstrip.setBrightness(1);
@@ -326,9 +329,10 @@ bool updateUptime() {
 // Update presence function
 bool updatePresence() {
   // Update presence
-  presence = false; // TODO: implement presence detection
+  presence = digitalRead(PRESENCE_PIN);
   // If presence has changed
   if (presence != previous_presence) {
+    Serial.println("Updating presence...");
     // Update previous presence
     previous_presence = presence;
     // State has changed, return true
