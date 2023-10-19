@@ -3,11 +3,13 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
+#include <Adafruit_NeoPixel.h>
 
 #include "secret.h" // TODO: implement better way of storing and accessing secrets
 
 // Define pin constants
-const int modeSwitchPin = 4;  // pin for mode switch
+#define MODE_SWITCH_PIN 4  // pin for mode switch
+#define LEDSTRIP_PIN 25    // pin for led strip
 
 // Define MQTT constants
 const char* rootTopic = "music-light-tiles";
@@ -17,7 +19,7 @@ const char* commandTopic = "command";
 const int uptimeInterval = 1000; // interval in milliseconds to update uptime
 
 // Define device specific constants
-const int amount_of_sections = 16;
+#define AMOUNT_OF_PIXELS 16 // amount of pixels in the led strip
 const int amount_of_sounds = 3;
 const char* firmware_version = "0.0.3";
 const char* hardware_version = "0.0.1";
@@ -28,8 +30,8 @@ enum Mode {
   MQTT
 };
 
-// Define section struct (led section)
-struct Section {
+// Define pixel struct (led strip pixel)
+struct Pixel {
   int red;
   int green;
   int blue;
@@ -40,6 +42,7 @@ struct Section {
 Mode mode = DEMO; // default mode to demo mode
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
+Adafruit_NeoPixel ledstrip = Adafruit_NeoPixel(AMOUNT_OF_PIXELS, LEDSTRIP_PIN, NEO_WRGB + NEO_KHZ800);
 
 // Define global variables
 String device_name = "tile";
@@ -59,10 +62,10 @@ String previous_sound = "";
 int volume = 0;
 int previous_volume = 0;
 
-int brightness = 0;
-int previous_brightness = 0;
-Section sections[amount_of_sections] = {Section{0, 0, 0, 0}};
-Section previous_sections[amount_of_sections] = {Section{0, 0, 0, 0}};
+int brightness = 1;
+int previous_brightness = 1;
+Pixel pixels[AMOUNT_OF_PIXELS] = {Pixel{0, 0, 0, 0}};
+Pixel previous_pixels[AMOUNT_OF_PIXELS] = {Pixel{0, 0, 0, 0}};
 
 // Function prototypes
 void demo_loop();
@@ -82,10 +85,10 @@ void setup() {
   Serial.begin(9600);
 
   // Initialize the pushbutton pin as an input
-  pinMode(modeSwitchPin, INPUT);
+  pinMode(MODE_SWITCH_PIN, INPUT);
 
   // Set mode from button state
-  if (digitalRead(modeSwitchPin) == HIGH) { // TODO: no contact defaults to mqtt, but should be demo (but mqtt can't get past connecting to wifi for some reason if demo is default)
+  if (digitalRead(MODE_SWITCH_PIN) == HIGH) { // TODO: no contact defaults to mqtt, but should be demo (but mqtt can't get past connecting to wifi for some reason if demo is default)
     mode = DEMO;
   } else {
     mode = MQTT;
@@ -93,8 +96,12 @@ void setup() {
 
   // General setup
   Serial.println("Running general setup...");
+  // Setup led strip (set leds to off)
+  ledstrip.begin();
+  ledstrip.setBrightness(1);
+  ledstrip.show();
 
-  // TODO: Implement general setup
+  // TODO: Implement audio setup
 
   // Initialise program depending on mode
   if (mode == DEMO) {
@@ -136,11 +143,11 @@ void demo_loop() {
       // Set brightness to 50
       brightness = 50;
       // Fill sections with the color green
-      for (int i = 0; i < amount_of_sections; i++) {
-        sections[i].red = 0;
-        sections[i].green = 255;
-        sections[i].blue = 0;
-        sections[i].white = 0;
+      for (int i = 0; i < AMOUNT_OF_PIXELS; i++) {
+        pixels[i].red = 0;
+        pixels[i].green = 255;
+        pixels[i].blue = 0;
+        pixels[i].white = 0;
       }
       // Set audio to play
       play = true;
@@ -152,11 +159,11 @@ void demo_loop() {
       // Set brightness to 0
       brightness = 0;
       // Fill sections with the color red
-      for (int i = 0; i < amount_of_sections; i++) {
-        sections[i].red = 255;
-        sections[i].green = 0;
-        sections[i].blue = 0;
-        sections[i].white = 0;
+      for (int i = 0; i < AMOUNT_OF_PIXELS; i++) {
+        pixels[i].red = 255;
+        pixels[i].green = 0;
+        pixels[i].blue = 0;
+        pixels[i].white = 0;
       }
       // Set audio to not play
       play = false;
@@ -288,12 +295,12 @@ void callback(char* topic, byte* payload, unsigned int length) {
   brightness = doc["light"]["brightness"];
 
   JsonArray light_sections = doc["light"]["sections"];
-  for (int i = 0; i < amount_of_sections; i++) {
+  for (int i = 0; i < AMOUNT_OF_PIXELS; i++) {
     JsonObject section = light_sections[i];
-    sections[i].red = section["r"];
-    sections[i].green = section["g"];
-    sections[i].blue = section["b"];
-    sections[i].white = section["w"];
+    pixels[i].red = section["r"];
+    pixels[i].green = section["g"];
+    pixels[i].blue = section["b"];
+    pixels[i].white = section["w"];
   }
 }
 
@@ -355,15 +362,21 @@ bool updateAudio() {
 // Update lights function
 bool updateLights() {
   // If brightness has changed or sections have changed (value in sections is different from previous value in sections)
-  if (brightness != previous_brightness || memcmp(sections, previous_sections, sizeof(sections)) != 0) {
+  if (brightness != previous_brightness || memcmp(pixels, previous_pixels, sizeof(pixels)) != 0) {
 
-    // Set lights to new values
-    // TODO: implement lights
     Serial.println("Updating lights...");
+    // Set brightness to new value
+    ledstrip.setBrightness(brightness);
+    // Set pixels to new values
+    for (int i = 0; i < AMOUNT_OF_PIXELS; i++) {
+      ledstrip.setPixelColor(i, ledstrip.Color(pixels[i].red, pixels[i].green, pixels[i].blue, pixels[i].white));
+    }
+    // Show changes
+    ledstrip.show();
 
     // Update previous values
     previous_brightness = brightness;
-    memcpy(previous_sections, sections, sizeof(sections));
+    memcpy(previous_pixels, pixels, sizeof(pixels));
     // State has changed, return true
     return true;
   } else {
@@ -395,12 +408,12 @@ String serializeState() {
   light["brightness"] = brightness;
 
   JsonArray light_sections = light.createNestedArray("sections");
-  for (int i = 0; i < amount_of_sections; i++) {
+  for (int i = 0; i < AMOUNT_OF_PIXELS; i++) {
     JsonObject section = light_sections.createNestedObject();
-    section["r"] = sections[i].red;
-    section["g"] = sections[i].green;
-    section["b"] = sections[i].blue;
-    section["w"] = sections[i].white;
+    section["r"] = pixels[i].red;
+    section["g"] = pixels[i].green;
+    section["b"] = pixels[i].blue;
+    section["w"] = pixels[i].white;
   }
 
   doc["detect"]["detected"] = presence;
