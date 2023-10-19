@@ -133,6 +133,8 @@ void demo_loop() {
   if (presenceChanged) {
     // If presence is true
     if (presence) {
+      // Set brightness to 50
+      brightness = 50;
       // Fill sections with the color green
       for (int i = 0; i < amount_of_sections; i++) {
         sections[i].red = 0;
@@ -140,14 +142,15 @@ void demo_loop() {
         sections[i].blue = 0;
         sections[i].white = 0;
       }
-
-      // Update lights
-      updateLights();
-
-      // Set audio
-      updateAudio();
-
+      // Set audio to play
+      play = true;
+      // Set sound to "sound1"
+      sound = "sound1";
+      // Set volume to 50
+      volume = 50;
     } else {
+      // Set brightness to 0
+      brightness = 0;
       // Fill sections with the color red
       for (int i = 0; i < amount_of_sections; i++) {
         sections[i].red = 255;
@@ -155,17 +158,22 @@ void demo_loop() {
         sections[i].blue = 0;
         sections[i].white = 0;
       }
-
-      // Update lights
-      updateLights();
-
-      // Set audio
-      updateAudio();
+      // Set audio to not play
+      play = false;
+      // Set sound to ""
+      sound = "";
+      // Set volume to 0
+      volume = 0;
     }
+    // Update lights
+    updateLights();
+
+    // Update audio
+    updateAudio();
   }
 
   // Wait a little bit (just for testing purposes, remove this later)
-  delay(1000);
+  delay(10);
 }
 
 // MQTT setup function (setup for MQTT mode)
