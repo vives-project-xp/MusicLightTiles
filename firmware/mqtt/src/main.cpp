@@ -156,8 +156,8 @@ void demo_loop() {
       // Set volume to 50
       volume = 50;
     } else {
-      // Set brightness to 0
-      brightness = 0;
+      // Set brightness to 1 (off)
+      brightness = 1;
       // Fill sections with the color red
       for (int i = 0; i < AMOUNT_OF_PIXELS; i++) {
         pixels[i].red = 255;
