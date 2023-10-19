@@ -235,7 +235,8 @@ void mqtt_loop() {
   }
 
   // Update uptime
-  bool uptimeChanged = updateUptime();
+  //bool uptimeChanged = updateUptime();
+  updateUptime();
 
   // Update audio
   bool audioChanged = updateAudio();
@@ -247,7 +248,7 @@ void mqtt_loop() {
   bool presenceChanged = updatePresence();
 
   // If state has changed, publish new state
-  if (uptimeChanged  || audioChanged || lightsChanged || presenceChanged) {
+  if (audioChanged || lightsChanged || presenceChanged) {
     client.publish((String(rootTopic) + "/" + String(device_name) + "/" + String(stateTopic)).c_str(), serializeState().c_str());
   }
 
@@ -296,7 +297,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
 }
 
-// TODO: only send uptime changes when something else changes (not every second)
 // Update uptime function
 bool updateUptime() {
   // Get current millis
