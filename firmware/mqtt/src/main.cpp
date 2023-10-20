@@ -83,7 +83,7 @@ String serializeState();
 // Setup function
 void setup() {
   // Set serial monitor baud rate for debugging purposes
-  Serial.begin(9600);
+  Serial.begin(115200);
 
   // Initialize the pushbutton pin as an input
   pinMode(MODE_SWITCH_PIN, INPUT);
