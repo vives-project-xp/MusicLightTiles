@@ -1,4 +1,4 @@
-<mxfile host="Electron" modified="2023-10-19T14:49:02.123Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/21.6.8 Chrome/114.0.5735.289 Electron/25.5.0 Safari/537.36" etag="gGnv5QunUocTlH-_L0hI" version="21.6.8" type="device" pages="4">
+<mxfile host="Electron" modified="2023-10-20T19:34:00.369Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/21.6.8 Chrome/114.0.5735.289 Electron/25.5.0 Safari/537.36" etag="zTcq8TzBUtEmNQ16nnFu" version="21.6.8" type="device" pages="5">
   <diagram id="KG5Tv-M2EumJKX-52j1d" name="General">
     <mxGraphModel dx="1418" dy="820" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
@@ -369,6 +369,87 @@
         </mxCell>
         <mxCell id="LQyNUrXTEW4eAObEXycG-19" value="&lt;h1&gt;Leds and sound off&lt;/h1&gt;" style="text;html=1;strokeColor=none;fillColor=none;spacing=5;spacingTop=-20;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
           <mxGeometry x="410" y="570" width="190" height="120" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="oPLGRAU5lHJ0XVzmZYz-" name="Audio">
+    <mxGraphModel dx="2268" dy="820" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="Pc_-0jIv9prI4rLNAULF-1" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="-560" y="280" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="Pc_-0jIv9prI4rLNAULF-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="Pc_-0jIv9prI4rLNAULF-3" target="Pc_-0jIv9prI4rLNAULF-11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Pc_-0jIv9prI4rLNAULF-3" value="Start&amp;nbsp;&lt;br&gt;(spannign en verbonden met MQTT)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="-560" y="280" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="Pc_-0jIv9prI4rLNAULF-4" value="Componenten nodig voor audio" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="-805" y="120" width="210" height="110" as="geometry">
+            <mxRectangle x="-800" y="40" width="60" height="30" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Pc_-0jIv9prI4rLNAULF-5" value="-- Esp 32&amp;nbsp;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="Pc_-0jIv9prI4rLNAULF-4">
+          <mxGeometry y="30" width="210" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="Pc_-0jIv9prI4rLNAULF-6" value="-- DF Media Player&amp;nbsp;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="Pc_-0jIv9prI4rLNAULF-4">
+          <mxGeometry y="50" width="210" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="Pc_-0jIv9prI4rLNAULF-7" value="-- Speaker" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="Pc_-0jIv9prI4rLNAULF-4">
+          <mxGeometry y="70" width="210" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="Pc_-0jIv9prI4rLNAULF-8" value="-- Micro SD card 8gb" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" vertex="1" parent="Pc_-0jIv9prI4rLNAULF-4">
+          <mxGeometry y="90" width="210" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="Pc_-0jIv9prI4rLNAULF-9" value="&lt;h1&gt;Werking audio&amp;nbsp;&lt;/h1&gt;" style="text;html=1;strokeColor=none;fillColor=none;spacing=5;spacingTop=-20;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="-800" y="40" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="Pc_-0jIv9prI4rLNAULF-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="Pc_-0jIv9prI4rLNAULF-11">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="-500" y="480" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Pc_-0jIv9prI4rLNAULF-11" value="Spanning aan de&amp;nbsp;&lt;br&gt;controller&amp;nbsp;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="-560" y="380" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="Pc_-0jIv9prI4rLNAULF-12" value="Volume en liedje/geluid selecteren, &lt;br&gt;(licht wordt ook gekozen)" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;" vertex="1" parent="1">
+          <mxGeometry x="-585" y="480" width="170" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="Pc_-0jIv9prI4rLNAULF-13" value="" style="endArrow=classic;html=1;rounded=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="-500.42" y="570" as="sourcePoint" />
+            <mxPoint x="-500" y="610" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Pc_-0jIv9prI4rLNAULF-14" value="Bij het staan op de tegel speel het gekozen geluid op het juiste volume af.&amp;nbsp;" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;" vertex="1" parent="1">
+          <mxGeometry x="-630" y="610" width="260" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="Pc_-0jIv9prI4rLNAULF-15" value="" style="endArrow=classic;html=1;rounded=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="-500.42" y="700" as="sourcePoint" />
+            <mxPoint x="-500.42" y="760" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Pc_-0jIv9prI4rLNAULF-16" value="Stoppen bij het stappen van de tegel." style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;" vertex="1" parent="1">
+          <mxGeometry x="-600" y="760" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="Pc_-0jIv9prI4rLNAULF-17" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="Pc_-0jIv9prI4rLNAULF-16">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="-530" y="940" as="sourcePoint" />
+            <mxPoint x="-500" y="890" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Pc_-0jIv9prI4rLNAULF-18" value="Stop&amp;nbsp;&lt;br&gt;(Bij verlies van spanning)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="-560" y="890" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="Pc_-0jIv9prI4rLNAULF-19" value="Muziek/geluid wordt gekozen van de files van de SD kaart, die op zijn beurt is verbonden met de media player. Deze is verbonden met de ESP 32 waaruit alles wordt aangestuurd." style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="-370" y="462.5" width="349" height="125" as="geometry" />
+        </mxCell>
+        <mxCell id="Pc_-0jIv9prI4rLNAULF-20" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.978;entryY=0.496;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="Pc_-0jIv9prI4rLNAULF-19" target="Pc_-0jIv9prI4rLNAULF-12">
+          <mxGeometry relative="1" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
