@@ -101,7 +101,7 @@ String previous_sound = sound;
 int volume = 0; // 0-30
 int previous_volume = 0;
 
-int brightness = 1;
+int brightness = 1; // 1-255 (0 = full brightness, 1 = off, 255 = almost full brightness)
 int previous_brightness = 1;
 Pixel pixels[amount_of_pixels] = {Pixel{0, 0, 0, 0}};
 Pixel previous_pixels[amount_of_pixels] = {Pixel{0, 0, 0, 0}};
@@ -152,7 +152,6 @@ void setup() {
   // Initialise program depending on mode
   if (mode == DEMO) {
     // Demo mode doesn't need setup, so do nothing
-    Serial.println("Running demo setup...");
   } else if (mode == MQTT) {
     // Run mqtt setup
     mqtt_setup();
@@ -174,6 +173,7 @@ void loop() {
   } else {
     // Something went wrong, print error and do nothing
     Serial.println("Unknown mode, doing nothing...");
+    delay(1000); // Wait some time to prevent spamming the serial monitor
   }
 }
 
@@ -303,6 +303,9 @@ void mqtt_loop() {
     updateUptime();
   }
 
+  // Update presence
+  bool presenceChanged = updatePresence();
+
   // Update audio
   bool audioChanged = updateAudio();
 
@@ -311,9 +314,6 @@ void mqtt_loop() {
 
   // Update lights
   bool lightsChanged = updateLights();
-
-  // Update presence
-  bool presenceChanged = updatePresence();
 
   // If state has changed, publish new state
   if (uptimeChanged || audioChanged || lightsChanged || presenceChanged || playerStateChanged) {
