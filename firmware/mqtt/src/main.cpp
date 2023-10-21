@@ -320,6 +320,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
     return;
   }
 
+  // TODO: validate payload values (check if values are possible)
   // Deserialize JSON
   StaticJsonDocument<1536> doc;
   DeserializationError error = deserializeJson(doc, payload, length);
