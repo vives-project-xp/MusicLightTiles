@@ -8,28 +8,16 @@
 
 #include "secret.h" // TODO: implement better way of storing and accessing secrets
 
-// Define pin constants
-#define MODE_SWITCH_PIN 4  // pin for mode switch
-#define PRESENCE_PIN 16    // pin for presence detection
-#define LEDSTRIP_PIN 25    // pin for led strip
-
-// Define MQTT constants
-const char* rootTopic = "music-light-tiles";
-const char* stateTopic = "state";
-const char* commandTopic = "command";
-
-const int uptimeInterval = 1000; // interval in milliseconds to update uptime
-
-// Define device specific constants
-#define AMOUNT_OF_PIXELS 16 // amount of pixels in the led strip
-const int amount_of_sounds = 3;
-const char* firmware_version = "0.0.3";
-const char* hardware_version = "0.0.1";
-
 // Define mode enum (mode switch)
 enum Mode {
   DEMO,
   MQTT
+};
+
+// Define sound struct (sound file)
+struct Sound {
+  int id;
+  String name;
 };
 
 // Define pixel struct (led strip pixel)
@@ -40,11 +28,41 @@ struct Pixel {
   int white;
 };
 
+// Define pin constants
+#define MODE_SWITCH_PIN 4  // pin for mode switch
+#define PRESENCE_PIN 5     // pin for presence detection
+#define LEDSTRIP_PIN 25    // pin for led strip
+#define RX_PIN 16          // pin rx, should be connected to tx of dfplayer
+#define TX_PIN 17          // pin tx, should be connected to rx of dfplayer
+
+// Define MQTT constants
+const char* rootTopic = "music-light-tiles";
+const char* stateTopic = "state";
+const char* commandTopic = "command";
+
+const int uptimeInterval = 1000; // interval in milliseconds to update uptime
+
+// Define device specific constants
+#define AMOUNT_OF_PIXELS 16 // amount of pixels in the led strip
+const char* firmware_version = "0.0.4";
+const char* hardware_version = "0.0.1";
+const Sound sounds[] = {
+  Sound{1, "Sound-1"}, 
+  Sound{2, "Sound-2"}, 
+  Sound{3, "Sound-3"},
+  Sound{4, "Sound-4"},
+  Sound{5, "Sound-5"},
+  Sound{6, "Sound-6"}
+}; // All sounds that can be played (available on the sd card of the dfplayer)
+const int amount_of_sounds = sizeof(sounds) / sizeof(sounds[0]);
+
 // Define global objects
 Mode mode = DEMO; // default mode to demo mode
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
 Adafruit_NeoPixel ledstrip = Adafruit_NeoPixel(AMOUNT_OF_PIXELS, LEDSTRIP_PIN, NEO_WRGB + NEO_KHZ800);
+HardwareSerial hs(1);
+DFRobotDFPlayerMini dfplayer;
 
 // Define global variables
 String device_name = "tile";
@@ -53,16 +71,18 @@ bool reboot = false;
 bool ping = false;
 unsigned long uptime = 0;
 unsigned long lastUptime = 0;
-String sounds[amount_of_sounds] = {String("")};
 
 bool presence = false;
 bool previous_presence = false;
 
-bool play = false;
-bool previous_play = false;
-String sound = "";
-String previous_sound = "";
-int volume = 0;
+int audio_mode = 4; // 1 = play, 2 = pause, 3 = resume, 4 = stop
+int previous_audio_mode = 4;
+int audio_state = 0; // 0 = idle, 1 = playing, 2 = paused
+bool audio_loop = false;
+bool previous_audio_loop = false;
+String sound = sounds[0].name; // Take first sound in sounds array as default
+String previous_sound = sound;
+int volume = 0; // 0-30
 int previous_volume = 0;
 
 int brightness = 1;
@@ -79,6 +99,7 @@ void updateState();
 bool updateUptime();
 bool updatePresence();
 bool updateAudio();
+bool audioPlayerStateChanged();
 bool updateLights();
 String serializeState();
 
@@ -105,8 +126,12 @@ void setup() {
   ledstrip.begin();
   ledstrip.setBrightness(1);
   ledstrip.show();
-
-  // TODO: Implement audio setup
+  // Setup audio
+  hs.begin(9600, SERIAL_8N1, RX_PIN, TX_PIN);
+  dfplayer.begin(hs); // Use hardware serial to communicate with DFPlayer Mini
+  dfplayer.setTimeOut(500); // Set serial communication time out 500ms
+  dfplayer.volume(volume); // Set volume off
+  dfplayer.EQ(DFPLAYER_EQ_NORMAL);  // Set EQ to normal
 
   // Initialise program depending on mode
   if (mode == DEMO) {
@@ -155,11 +180,11 @@ void demo_loop() {
         pixels[i].white = 0;
       }
       // Set audio to play
-      play = true;
+      audio_mode = 1;
       // Set sound to "sound1"
-      sound = "sound1";
-      // Set volume to 50
-      volume = 50;
+      sound = "Make Me Jelous";
+      // Set volume to 15 (50%)
+      volume = 15;
     } else {
       // Set brightness to 1 (off)
       brightness = 1;
@@ -170,10 +195,8 @@ void demo_loop() {
         pixels[i].blue = 0;
         pixels[i].white = 0;
       }
-      // Set audio to not play
-      play = false;
-      // Set sound to ""
-      sound = "";
+      // Set audio to stop
+      audio_mode = 2;
       // Set volume to 0
       volume = 0;
     }
@@ -257,6 +280,9 @@ void mqtt_loop() {
   // Update audio
   bool audioChanged = updateAudio();
 
+  // Read player state
+  bool playerStateChanged = audioPlayerStateChanged();
+
   // Update lights
   bool lightsChanged = updateLights();
 
@@ -299,9 +325,10 @@ void callback(char* topic, byte* payload, unsigned int length) {
   ping = system["ping"];
 
   JsonObject audio = doc["audio"];
-  play = audio["play"];
+  audio_mode = audio["mode"];
+  audio_loop = audio["loop"];
   sound = (const char*)audio["sound"];
-  volume = audio["volume"];
+  volume = ((int)audio["volume"] / 100.0) * 30;  // Convert volume from 0-100 to 0-30
 
   brightness = doc["light"]["brightness"];
 
@@ -353,20 +380,201 @@ bool updatePresence() {
 
 // Update audio function
 bool updateAudio() {
-  if (play != previous_play || sound != previous_sound || volume != previous_volume) {
+  if (audio_mode != previous_audio_mode || sound != previous_sound || volume != previous_volume || audio_loop != previous_audio_loop ) {
 
-    // Set audio to new values
-    // TODO: implement audio
     Serial.println("Updating audio...");
 
+    if (dfplayer.available()) {
+      Serial.println("Player is available");
+      Serial.println("Current state: " + String(audio_state));
+    } else {
+      Serial.println("Player is not available");
+      Serial.println("Current state: " + String(audio_state));
+    }
+
+    // TODO trigger state change when player is done playing
+
+    // Check current audio state
+    switch (audio_state) {
+      case 0:
+        // Idle
+        Serial.println("Idle");
+        // Set volume
+        dfplayer.volume(volume);
+        // Set loop
+        if (audio_loop) {
+          dfplayer.enableLoop();
+        } else {
+          dfplayer.disableLoop();
+        }
+        // If audio mode is play
+        if (audio_mode == 1){
+          Serial.println("Play");
+          // Play sound
+          for (int i = 0; i < amount_of_sounds; i++) {
+            if (sound == sounds[i].name) {
+              dfplayer.play(sounds[i].id);
+              break;
+            }
+          }
+          // Set audio state to playing
+          audio_state = 1;
+        } else {
+          Serial.println("Can't pause, resume or stop if nothing is playing, doing nothing...");
+          // Can't pause, resume or stop if nothing is playing, do nothing
+        }
+        break;
+
+    case 1:
+      // Playing
+      Serial.println("Playing");
+      // Check current audio mode, volume, loop
+      if (audio_mode == 1 && sound != previous_sound) {
+        Serial.println("Play");
+        // Play
+        // Stop whatever is going on
+        dfplayer.stop();
+        // Set volume
+        dfplayer.volume(volume);
+        // Set loop
+        if (audio_loop) {
+          dfplayer.enableLoop();
+        } else {
+          dfplayer.disableLoop();
+        }
+        // Play sound
+        for (int i = 0; i < amount_of_sounds; i++) {
+          if (sound == sounds[i].name) {
+            dfplayer.play(sounds[i].id);
+            break;
+          }
+        }
+      } else if (audio_mode == 2) {
+        Serial.println("Pause");
+        // Pause
+        // Pause sound
+        dfplayer.pause();
+        // Set audio state to paused
+        audio_state = 2;
+      } else if (audio_mode == 3) {
+        Serial.println("Resume");
+        // Resume
+        // Resume sound
+        dfplayer.start();
+        // Set audio state to playing
+        audio_state = 1;
+      } else if (audio_mode == 4) {
+        Serial.println("Stop");
+        // Stop
+        // Stop sound
+        dfplayer.stop();
+        // Set audio state to idle
+        audio_state = 0;
+      } else if (volume != previous_volume) {
+        Serial.println("Change volume");
+        // Volume changed
+        // Pause sound (can't change volume while playing)
+        dfplayer.pause();
+        // Set volume
+        dfplayer.volume(volume);
+        // Resume sound
+        dfplayer.start();
+      } else if (audio_loop != previous_audio_loop) {
+        Serial.println("Change loop");
+        // Loop changed
+        // Pause sound (can't change loop while playing)
+        dfplayer.pause();
+        // Set loop
+        if (audio_loop) {
+          dfplayer.enableLoop();
+        } else {
+          dfplayer.disableLoop();
+        }
+        // Resume sound
+        dfplayer.start();
+      } else {
+        Serial.println("Invalid audio mode, doing nothing...");
+        // Invalid audio mode, do nothing
+      }
+      break;
+
+      case 2:
+        // Paused
+        Serial.println("Paused");
+        // Check current audio mode
+        switch (audio_mode) {
+          case 1:
+            // Play
+            Serial.println("Play");
+            // Play sound
+            for (int i = 0; i < amount_of_sounds; i++) {
+              if (sound == sounds[i].name) {
+                dfplayer.play(sounds[i].id);
+                break;
+              }
+            }
+            // Set audio state to playing
+            audio_state = 1;
+            break;
+          case 3:
+            // Resume
+            Serial.println("Resume");
+            // Resume sound
+            dfplayer.start();
+            // Set audio state to playing
+            audio_state = 1;
+            break;
+          case 4:
+            // Stop
+            Serial.println("Stop");
+            // Stop sound
+            dfplayer.stop();
+            // Set audio state to idle
+            audio_state = 0;
+            break;
+          default:
+            Serial.println("Can't pause if already paused, doing nothing...");
+            // Do nothing (can't pause if already paused)
+            break;
+        }
+        break;
+
+    default:
+      // Unknown state, do nothing
+      Serial.println("Unknown audio state, doing nothing...");
+      break;
+    }
+
     // Update previous values
-    previous_play = play;
+    previous_audio_mode = audio_mode;
     previous_sound = sound;
     previous_volume = volume;
+    previous_audio_loop = audio_loop;
     // State has changed, return true
     return true;
   } else {
     // Nothing has changed, return false
+    return false;
+  }
+}
+
+// Read player state function
+bool audioPlayerStateChanged(){
+  // Check if player is available
+  if (dfplayer.available()) {
+    // Check if player is done playing and audio is not looping
+    if (dfplayer.readType() == DFPlayerPlayFinished && audio_loop == false) {
+      Serial.println("Player is done playing");
+      // Set audio state to idle
+      audio_state = 0;
+      // State has changed, return true
+      return true;
+    } else {
+      // No significant change, return false
+      return false;
+    }
+  } else {
+    // No significant change, return false
     return false;
   }
 }
@@ -409,13 +617,14 @@ String serializeState() {
 
   JsonArray system_sounds = system.createNestedArray("sounds");
   for (int i = 0; i < amount_of_sounds; i++) {
-    system_sounds.add(sounds[i]);
+    system_sounds.add(sounds[i].name);
   }
 
   JsonObject audio = doc.createNestedObject("audio");
-  audio["playing"] = play;
+  audio["mode"] = audio_state;
+  audio["looping"] = audio_loop;
   audio["sound"] = sound;
-  audio["volume"] = volume;
+  audio["volume"] = (volume / 30.0) * 100;  // Convert volume from 0-30 to 0-100
 
   JsonObject light = doc.createNestedObject("light");
   light["brightness"] = brightness;

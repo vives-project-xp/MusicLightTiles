@@ -49,7 +49,8 @@ This property has the following subproperties:
 
 | Property | Type | Description |
 | -------- | ---- | ----------- |
-| `playing` | Boolean | Whether the device is playing audio or not. |
+| `state` | Number | The mode the device is in. 0 = idle, 1 = playing, 2 = paused. |
+| `looping` | Boolean | Whether the device is looping the audio or not. |
 | `sound` | String | The sound the device is playing. |
 | `volume` | Number | The volume of the device. |
 
@@ -86,7 +87,8 @@ Here is an example of how a full state payload should look.
     "sounds": ["sound-1", "sound-2", "sound-3"]
   },
   "audio": {
-    "playing": true,
+    "state": 2,
+    "looping": false,
     "sound": "sound-1",
     "volume": 50
   },
@@ -140,9 +142,10 @@ This property has the following subproperties:
 
 | Property | Type | Description |
 | -------- | ---- | ----------- |
-| `play` | Boolean | Whether the device should play audio or not. |
+| `mode` | Number | The mode the device should set. 1 = play, 2 = pause, 3 = resume, 4 = stop. |
+| `loop` | Boolean | Whether the device should loop the audio or not. |
 | `sound` | String | The sound the device should play. |
-| `volume` | Number | The volume the device should set. |
+| `volume` | Number | The volume the device should set. (0 - 100%) |
 
 #### Light
 
@@ -165,7 +168,8 @@ Here is an example of how a full command payload should look.
     "ping": false
   },
   "audio": {
-    "play": true,
+    "mode": 1,
+    "loop": false,
     "sound": "sound-1",
     "volume": 50
   },
