@@ -38,6 +38,7 @@ This property has the following subproperties:
 | -------- | ---- | ----------- |
 | `firmware` | String | The firmware version of the device. |
 | `hardware` | String | The hardware version of the device. |
+| `ping` | Boolean | Whether the device is pinging or not. |
 | `uptime` | Number | The number of seconds the device has been running. |
 | `sounds` | Array | The list od possible sounds the device can play. |
 
@@ -80,6 +81,7 @@ Here is an example of how a full state payload should look.
   "system": {
     "firmware": "1.0.0",
     "hardware": "1.0.0",
+    "ping": false,
     "uptime": 1234,
     "sounds": ["sound-1", "sound-2", "sound-3"]
   },
@@ -129,6 +131,7 @@ This property has the following subproperties:
 | Property | Type | Description |
 | -------- | ---- | ----------- |
 | `reboot` | Boolean | Whether the device should reboot or not. |
+| `ping` | Boolean | Whether the device should send its uptime every change or not. |
 
 #### Audio
 
@@ -158,7 +161,8 @@ Here is an example of how a full command payload should look.
 ```json
 {
   "system": {
-    "reboot": false
+    "reboot": false,
+    "ping": false
   },
   "audio": {
     "play": true,

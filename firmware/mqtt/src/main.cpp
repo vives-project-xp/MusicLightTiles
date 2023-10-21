@@ -49,6 +49,7 @@ Adafruit_NeoPixel ledstrip = Adafruit_NeoPixel(AMOUNT_OF_PIXELS, LEDSTRIP_PIN, N
 String device_name = "tile";
 
 bool reboot = false;
+bool ping = false;
 unsigned long uptime = 0;
 unsigned long lastUptime = 0;
 String sounds[amount_of_sounds] = {String("")};
@@ -245,8 +246,12 @@ void mqtt_loop() {
   }
 
   // Update uptime
-  //bool uptimeChanged = updateUptime();
-  updateUptime();
+  bool uptimeChanged = false;
+  if (ping) {
+    uptimeChanged = updateUptime();
+  } else {
+    updateUptime();
+  }
 
   // Update audio
   bool audioChanged = updateAudio();
@@ -258,7 +263,7 @@ void mqtt_loop() {
   bool presenceChanged = updatePresence();
 
   // If state has changed, publish new state
-  if (audioChanged || lightsChanged || presenceChanged) {
+  if (uptimeChanged || audioChanged || lightsChanged || presenceChanged || playerStateChanged) {
     client.publish((String(rootTopic) + "/" + String(device_name) + "/" + String(stateTopic)).c_str(), serializeState().c_str());
   }
 
@@ -288,7 +293,9 @@ void callback(char* topic, byte* payload, unsigned int length) {
     return;
   }
 
-  reboot = doc["system"]["reboot"];
+  JsonObject system = doc["system"];
+  reboot = system["reboot"];
+  ping = system["ping"];
 
   JsonObject audio = doc["audio"];
   play = audio["play"];
@@ -396,6 +403,7 @@ String serializeState() {
   JsonObject system = doc.createNestedObject("system");
   system["firmware"] = firmware_version;
   system["hardware"] = hardware_version;
+  system["ping"] = ping;
   system["uptime"] = uptime;
 
   JsonArray system_sounds = system.createNestedArray("sounds");
