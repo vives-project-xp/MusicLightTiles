@@ -4,6 +4,7 @@
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
 #include <Adafruit_NeoPixel.h>
+#include <DFRobotDFPlayerMini.h>
 
 #include "secret.h" // TODO: implement better way of storing and accessing secrets
 
