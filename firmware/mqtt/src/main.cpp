@@ -14,6 +14,22 @@ enum Mode {
   MQTT
 };
 
+// Define audio action enum (audio_state + audio_mode)
+enum AudioAction {
+  IDLE_PLAY = 1,
+  IDLE_PAUSE = 2,
+  IDLE_RESUME = 3,
+  IDLE_STOP = 4,
+  PLAY_PLAY = 11,
+  PLAY_PAUSE = 12,
+  PLAY_RESUME = 13,
+  PLAY_STOP = 14,
+  PAUSE_PLAY = 21,
+  PAUSE_PAUSE = 22,
+  PAUSE_RESUME = 23,
+  PAUSE_STOP = 24
+};
+
 // Define sound struct (sound file)
 struct Sound {
   int id;
@@ -196,7 +212,7 @@ void demo_loop() {
         pixels[i].white = 0;
       }
       // Set audio to stop
-      audio_mode = 2;
+      audio_mode = 4;
       // Set volume to 0
       volume = 0;
     }
@@ -391,10 +407,11 @@ bool updatePresence() {
 
 // Update audio function
 bool updateAudio() {
-  if (audio_mode != previous_audio_mode || sound != previous_sound || volume != previous_volume || audio_loop != previous_audio_loop ) {
+  if (audio_mode != previous_audio_mode || sound != previous_sound || volume != previous_volume || audio_loop != previous_audio_loop) {
 
     Serial.println("Updating audio...");
 
+    // Print current state for debugging purposes
     if (dfplayer.available()) {
       Serial.println("Player is available");
       Serial.println("Current state: " + String(audio_state));
@@ -403,48 +420,15 @@ bool updateAudio() {
       Serial.println("Current state: " + String(audio_state));
     }
 
-    // TODO trigger state change when player is done playing
+    // Create audio action from audio state and audio mode
+    AudioAction audioAction = AudioAction((String(audio_state) + String(audio_mode)).toInt());
+    Serial.println("Audio action: " + String(audioAction));
 
     // Check current audio state
-    switch (audio_state) {
-      case 0:
-        // Idle
-        Serial.println("Idle");
-        // Set volume
-        dfplayer.volume(volume);
-        // Set loop
-        if (audio_loop) {
-          dfplayer.enableLoop();
-        } else {
-          dfplayer.disableLoop();
-        }
-        // If audio mode is play
-        if (audio_mode == 1){
-          Serial.println("Play");
-          // Play sound
-          for (int i = 0; i < amount_of_sounds; i++) {
-            if (sound == sounds[i].name) {
-              dfplayer.play(sounds[i].id);
-              break;
-            }
-          }
-          // Set audio state to playing
-          audio_state = 1;
-        } else {
-          Serial.println("Can't pause, resume or stop if nothing is playing, doing nothing...");
-          // Can't pause, resume or stop if nothing is playing, do nothing
-        }
-        break;
-
-    case 1:
-      // Playing
-      Serial.println("Playing");
-      // Check current audio mode, volume, loop
-      if (audio_mode == 1 && sound != previous_sound) {
-        Serial.println("Play");
-        // Play
-        // Stop whatever is going on
-        dfplayer.stop();
+    switch (audioAction){
+      case IDLE_PLAY: case PLAY_PLAY: case PAUSE_PLAY:
+        /* Play sound + Set volume + Set loop */
+        Serial.println("Playing sound...");
         // Set volume
         dfplayer.volume(volume);
         // Set loop
@@ -460,41 +444,30 @@ bool updateAudio() {
             break;
           }
         }
-      } else if (audio_mode == 2) {
-        Serial.println("Pause");
-        // Pause
-        // Pause sound
-        dfplayer.pause();
-        // Set audio state to paused
-        audio_state = 2;
-      } else if (audio_mode == 3) {
-        Serial.println("Resume");
-        // Resume
-        // Resume sound
-        dfplayer.start();
         // Set audio state to playing
         audio_state = 1;
-      } else if (audio_mode == 4) {
-        Serial.println("Stop");
-        // Stop
-        // Stop sound
-        dfplayer.stop();
-        // Set audio state to idle
-        audio_state = 0;
-      } else if (volume != previous_volume) {
-        Serial.println("Change volume");
-        // Volume changed
-        // Pause sound (can't change volume while playing)
+        break;
+      
+      case IDLE_PAUSE: case IDLE_RESUME: case IDLE_STOP: case PAUSE_PAUSE:
+        /* Set volume + Set loop */
+        Serial.println("Setting volume and loop...");
+        // Set volume
+        dfplayer.volume(volume);
+        // Set loop
+        if (audio_loop) {
+          dfplayer.enableLoop();
+        } else {
+          dfplayer.disableLoop();
+        }
+        break;
+
+      case PLAY_RESUME:
+        /* Pause sound + Set volume + Set loop + Resume sound */
+        Serial.println("Setting volume and loop...");
+        // Pause sound
         dfplayer.pause();
         // Set volume
         dfplayer.volume(volume);
-        // Resume sound
-        dfplayer.start();
-      } else if (audio_loop != previous_audio_loop) {
-        Serial.println("Change loop");
-        // Loop changed
-        // Pause sound (can't change loop while playing)
-        dfplayer.pause();
         // Set loop
         if (audio_loop) {
           dfplayer.enableLoop();
@@ -503,57 +476,63 @@ bool updateAudio() {
         }
         // Resume sound
         dfplayer.start();
-      } else {
-        Serial.println("Invalid audio mode, doing nothing...");
-        // Invalid audio mode, do nothing
-      }
-      break;
-
-      case 2:
-        // Paused
-        Serial.println("Paused");
-        // Check current audio mode
-        switch (audio_mode) {
-          case 1:
-            // Play
-            Serial.println("Play");
-            // Play sound
-            for (int i = 0; i < amount_of_sounds; i++) {
-              if (sound == sounds[i].name) {
-                dfplayer.play(sounds[i].id);
-                break;
-              }
-            }
-            // Set audio state to playing
-            audio_state = 1;
-            break;
-          case 3:
-            // Resume
-            Serial.println("Resume");
-            // Resume sound
-            dfplayer.start();
-            // Set audio state to playing
-            audio_state = 1;
-            break;
-          case 4:
-            // Stop
-            Serial.println("Stop");
-            // Stop sound
-            dfplayer.stop();
-            // Set audio state to idle
-            audio_state = 0;
-            break;
-          default:
-            Serial.println("Can't pause if already paused, doing nothing...");
-            // Do nothing (can't pause if already paused)
-            break;
-        }
         break;
 
-    default:
-      // Unknown state, do nothing
-      Serial.println("Unknown audio state, doing nothing...");
-      break;
+      case PLAY_PAUSE:
+        /* Pause sound + Set volume + Set loop */
+        Serial.println("Pausing sound...");
+        // Pause sound
+        dfplayer.pause();
+        // Set volume
+        dfplayer.volume(volume);
+        // Set loop
+        if (audio_loop) {
+          dfplayer.enableLoop();
+        } else {
+          dfplayer.disableLoop();
+        }
+        // Set audio state to paused
+        audio_state = 2;
+        break;
+
+      case PLAY_STOP: case PAUSE_STOP:
+        /* Stop sound + Set volume + Set loop */
+        Serial.println("Stopping sound...");
+        // Stop sound
+        dfplayer.stop();
+        // Set volume
+        dfplayer.volume(volume);
+        // Set loop
+        if (audio_loop) {
+          dfplayer.enableLoop();
+        } else {
+          dfplayer.disableLoop();
+        }
+        // Set audio state to idle
+        audio_state = 0;
+        break;
+
+      case PAUSE_RESUME:
+        /* Resume sound + Set volume + Set loop */
+        Serial.println("Resuming sound...");
+        // Set volume
+        dfplayer.volume(volume);
+        // Set loop
+        if (audio_loop) {
+          dfplayer.enableLoop();
+        } else {
+          dfplayer.disableLoop();
+        }
+        // Resume sound
+        dfplayer.start();
+        // Set audio state to playing
+        audio_state = 1;
+        break;
+      
+      default:
+        // Unknown action, do nothing
+        Serial.println("Unknown audio action, doing nothing...");
+        break;
     }
 
     // Update previous values
@@ -561,6 +540,7 @@ bool updateAudio() {
     previous_sound = sound;
     previous_volume = volume;
     previous_audio_loop = audio_loop;
+
     // State has changed, return true
     return true;
   } else {
