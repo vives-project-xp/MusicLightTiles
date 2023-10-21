@@ -256,6 +256,16 @@ void mqtt_setup() {
 void mqtt_loop() {
   // If not connected to MQTT broker or Wi-Fi, reconnect
   if (!client.connected() || !WiFi.isConnected()) {
+    // Try to disconnect from MQTT broker
+    if (client.connected()) {
+      client.publish((String(rootTopic) + "/" + String(device_name)).c_str(), String("OFFLINE").c_str());
+      client.disconnect();
+    }
+    // Try to disconnect from Wi-Fi
+    if (WiFi.isConnected()) {
+      WiFi.disconnect();
+    }
+    // Rerun MQTT setup (reconnect to MQTT broker and Wi-Fi)
     mqtt_setup();
   }
 
