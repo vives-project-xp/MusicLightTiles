@@ -43,7 +43,7 @@ const char* commandTopic = "command";
 const int uptimeInterval = 1000; // interval in milliseconds to update uptime
 
 // Define device specific constants
-#define AMOUNT_OF_PIXELS 16 // amount of pixels in the led strip
+const int amount_of_pixels = 16; // amount of pixels in the led strip
 const char* firmware_version = "0.0.4";
 const char* hardware_version = "0.0.1";
 const Sound sounds[] = {
@@ -60,7 +60,7 @@ const int amount_of_sounds = sizeof(sounds) / sizeof(sounds[0]);
 Mode mode = DEMO; // default mode to demo mode
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
-Adafruit_NeoPixel ledstrip = Adafruit_NeoPixel(AMOUNT_OF_PIXELS, LEDSTRIP_PIN, NEO_WRGB + NEO_KHZ800);
+Adafruit_NeoPixel ledstrip = Adafruit_NeoPixel(amount_of_pixels, LEDSTRIP_PIN, NEO_WRGB + NEO_KHZ800);
 HardwareSerial hs(1);
 DFRobotDFPlayerMini dfplayer;
 
@@ -87,8 +87,8 @@ int previous_volume = 0;
 
 int brightness = 1;
 int previous_brightness = 1;
-Pixel pixels[AMOUNT_OF_PIXELS] = {Pixel{0, 0, 0, 0}};
-Pixel previous_pixels[AMOUNT_OF_PIXELS] = {Pixel{0, 0, 0, 0}};
+Pixel pixels[amount_of_pixels] = {Pixel{0, 0, 0, 0}};
+Pixel previous_pixels[amount_of_pixels] = {Pixel{0, 0, 0, 0}};
 
 // Function prototypes
 void demo_loop();
@@ -173,7 +173,7 @@ void demo_loop() {
       // Set brightness to 50
       brightness = 50;
       // Fill sections with the color green
-      for (int i = 0; i < AMOUNT_OF_PIXELS; i++) {
+      for (int i = 0; i < amount_of_pixels; i++) {
         pixels[i].red = 0;
         pixels[i].green = 255;
         pixels[i].blue = 0;
@@ -182,14 +182,14 @@ void demo_loop() {
       // Set audio to play
       audio_mode = 1;
       // Set sound to "sound1"
-      sound = "Make Me Jelous";
+      sound = "Sound-1";
       // Set volume to 15 (50%)
       volume = 15;
     } else {
       // Set brightness to 1 (off)
       brightness = 1;
       // Fill sections with the color red
-      for (int i = 0; i < AMOUNT_OF_PIXELS; i++) {
+      for (int i = 0; i < amount_of_pixels; i++) {
         pixels[i].red = 255;
         pixels[i].green = 0;
         pixels[i].blue = 0;
@@ -344,7 +344,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   brightness = doc["light"]["brightness"];
 
   JsonArray light_sections = doc["light"]["sections"];
-  for (int i = 0; i < AMOUNT_OF_PIXELS; i++) {
+  for (int i = 0; i < amount_of_pixels; i++) {
     JsonObject section = light_sections[i];
     pixels[i].red = section["r"];
     pixels[i].green = section["g"];
@@ -599,7 +599,7 @@ bool updateLights() {
     // Set brightness to new value
     ledstrip.setBrightness(brightness);
     // Set pixels to new values
-    for (int i = 0; i < AMOUNT_OF_PIXELS; i++) {
+    for (int i = 0; i < amount_of_pixels; i++) {
       ledstrip.setPixelColor(i, ledstrip.Color(pixels[i].red, pixels[i].green, pixels[i].blue, pixels[i].white));
     }
     // Show changes
@@ -641,7 +641,7 @@ String serializeState() {
   light["brightness"] = brightness;
 
   JsonArray light_sections = light.createNestedArray("sections");
-  for (int i = 0; i < AMOUNT_OF_PIXELS; i++) {
+  for (int i = 0; i < amount_of_pixels; i++) {
     JsonObject section = light_sections.createNestedObject();
     section["r"] = pixels[i].red;
     section["g"] = pixels[i].green;
