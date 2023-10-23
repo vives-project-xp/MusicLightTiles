@@ -68,12 +68,13 @@ const Sound sounds[] = {
   Sound{3, "Sound-3"},
   Sound{4, "Sound-4"},
   Sound{5, "Sound-5"},
-  Sound{6, "Sound-6"}
+  Sound{6, "Sound-6"},
+  Sound{7, "Sound-7"}
 }; // All sounds that can be played (available on the sd card of the dfplayer)
 const int amount_of_sounds = sizeof(sounds) / sizeof(sounds[0]);
 
 // Define global objects
-Mode mode = DEMO; // default mode to demo mode
+Mode mode = DEMO; // default to demo mode
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
 Adafruit_NeoPixel ledstrip = Adafruit_NeoPixel(amount_of_pixels, LEDSTRIP_PIN, NEO_WRGB + NEO_KHZ800);
@@ -84,7 +85,7 @@ DFRobotDFPlayerMini dfplayer;
 String device_name = "tile";
 
 bool reboot = false;
-bool ping = false;
+bool ping = true; // TODO: should be false by default, but true for debugging purposes
 unsigned long uptime = 0;
 unsigned long lastUptime = 0;
 
@@ -124,8 +125,8 @@ void setup() {
   // Set serial monitor baud rate for debugging purposes
   Serial.begin(115200);
 
-  // Initialize the pushbutton pin as an input
-  pinMode(MODE_SWITCH_PIN, INPUT);
+  // Initialize the mode switch pin as an input with internal pullup resistor
+  pinMode(MODE_SWITCH_PIN, INPUT_PULLDOWN);
 
   // Set mode from button state
   if (digitalRead(MODE_SWITCH_PIN) == HIGH) { // TODO: no contact defaults to mqtt, but should be demo (but mqtt can't get past connecting to wifi for some reason if demo is default)
@@ -136,8 +137,8 @@ void setup() {
 
   // General setup
   Serial.println("Running general setup...");
-  // Setup presence detection
-  pinMode(PRESENCE_PIN, INPUT);
+  // Setup presence detection pin as input with internal pullup resistor
+  pinMode(PRESENCE_PIN, INPUT_PULLUP);
   // Setup led strip (set leds to off)
   ledstrip.begin();
   ledstrip.setBrightness(1);
@@ -257,7 +258,7 @@ void mqtt_setup() {
   while (!client.connected()) {
     if (client.connect(device_name.c_str(), mqtt_user, mqtt_password, (String(rootTopic) + "/" + String(device_name)).c_str(), 1, true, String("OFFLINE").c_str())) {
       Serial.println("Connected to MQTT broker as " + String(device_name));
-      client.publish((String(rootTopic) + "/" + String(device_name)).c_str(), String("ONLINE").c_str());
+      client.publish((String(rootTopic) + "/" + String(device_name)).c_str(), String("ONLINE").c_str(), true);
       client.publish((String(rootTopic) + "/" + String(device_name) + "/" + String(stateTopic)).c_str(), serializeState().c_str());
       client.subscribe((String(rootTopic) + "/" + String(device_name) + "/" + String(commandTopic)).c_str());
       Serial.println("Connected to MQTT broker as " + String(device_name));
@@ -291,7 +292,7 @@ void mqtt_loop() {
   // If reboot is true, reboot
   if (reboot) {
     Serial.println("Rebooting...");
-    client.publish((String(rootTopic) + "/" + String(device_name)).c_str(), String("OFFLINE").c_str());
+    client.publish((String(rootTopic) + "/" + String(device_name)).c_str(), String("OFFLINE").c_str(), true);
     ESP.restart();
   }
 
@@ -321,7 +322,7 @@ void mqtt_loop() {
   }
 
   // Wait a little bit (just for testing purposes, remove this later)
-  delay(10);
+  delay(100);
 }
 
 // MQTT callback function
