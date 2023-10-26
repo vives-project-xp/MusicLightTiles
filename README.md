@@ -33,11 +33,24 @@ Total cost: €273,74 (excluding 3d printed parts)
 
 ## 3D printed parts
 
-The 3D printed parts are designed in Fusion 360 and can be found in the `./3d` folder.
+The 3D printed parts are designed in Fusion 360 and can be found in the `./hardware` folder.
 The parts are designed to be printed with PLA, but PETG or ABS should also work.
 
+Some parts require support material, but most parts can be printed without support.
+Parts that need to be printed for each tile:
+
+- 3x `BaseCorner_Type1.stl`
+- 1x `BaseCorner_Type2.stl` (should be printed with support material)
+- 1x `Insert.stl`
+- 1x `InsertCover.stl`
+
+Some print settings:
+
+- Layer height: 0.28mm (finer layers are possible, but will increase print time)
+- Infill: 20%, pattern: zigzag, line orientation: [0, 45, 90, 135, 180] (these ate Cure settings, other slicers may have different names)
+
 > [!NOTE]  
-> The 3d models are still in development and are not available yet.
+> The 3d models are still in development. The first iteration is ready to be printed, but still needs testing, so it is possible that some parts may change in the future.
 
 ## Person detection
 
