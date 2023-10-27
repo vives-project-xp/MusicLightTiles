@@ -102,7 +102,7 @@ String previous_sound = sound;
 int volume = 0; // 0-30
 int previous_volume = 0;
 
-int brightness = 1; // 1-255 (0 = full brightness, 1 = off, 255 = almost full brightness)
+int brightness = 1; // 0-255 (0 = off, 255 = full brightness)
 int previous_brightness = 1;
 Pixel pixels[amount_of_pixels] = {Pixel{0, 0, 0, 0}};
 Pixel previous_pixels[amount_of_pixels] = {Pixel{0, 0, 0, 0}};
@@ -215,14 +215,14 @@ void demo_loop() {
       audio_mode = 1;
     } else {
       // Set brightness to 1 (off)
-      brightness = 1;
+      brightness = 0;
       // Fill sections with the color red
-      for (int i = 0; i < amount_of_pixels; i++) {
-        pixels[i].red = 255;
-        pixels[i].green = 0;
-        pixels[i].blue = 0;
-        pixels[i].white = 0;
-      }
+      //for (int i = 0; i < amount_of_pixels; i++) {
+      //  pixels[i].red = 255;
+      //  pixels[i].green = 0;
+      //  pixels[i].blue = 0;
+      //  pixels[i].white = 0;
+      //}
       // Set audio to stop
       audio_mode = 4;
     }
