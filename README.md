@@ -47,7 +47,7 @@ Parts that need to be printed for each tile:
 Some print settings:
 
 - Layer height: 0.28mm (finer layers are possible, but will increase print time)
-- Infill: 20%, pattern: zigzag, line orientation: [0, 45, 90, 135, 180] (these ate Cure settings, other slicers may have different names)
+- Infill: 20%, pattern: zigzag, line orientation: [0, 45, 90, 135] (these ate Cure settings, other slicers may have different names)
 
 > [!NOTE]  
 > The 3d models are still in development. The first iteration is ready to be printed, but still needs testing, so it is possible that some parts may change in the future.
