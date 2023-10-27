@@ -126,8 +126,8 @@ void setup() {
   // Set serial monitor baud rate for debugging purposes
   Serial.begin(115200);
 
-  // Initialize the mode switch pin as an input with internal pullup resistor
-  pinMode(MODE_SWITCH_PIN, INPUT_PULLDOWN);
+  // Initialize the mode switch pin as an input with internal pullup resistor (pressed = LOW, not pressed = HIGH)
+  pinMode(MODE_SWITCH_PIN, INPUT_PULLUP);
 
   // Set mode from button state
   if (digitalRead(MODE_SWITCH_PIN) == HIGH) { // TODO: no contact defaults to mqtt, but should be demo (but mqtt can't get past connecting to wifi for some reason if demo is default)
@@ -138,8 +138,8 @@ void setup() {
 
   // General setup
   Serial.println("Running general setup...");
-  // Setup presence detection pin as input with internal pullup resistor
-  pinMode(PRESENCE_PIN, INPUT_PULLUP);
+  // Setup presence detection pin as input with internal pulldown resistor (pressed = HIGH, not pressed = LOW)
+  pinMode(PRESENCE_PIN, INPUT_PULLDOWN);
   // Setup led strip (set leds to off)
   ledstrip.begin();
   ledstrip.setBrightness(1);
