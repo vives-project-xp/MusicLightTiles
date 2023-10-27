@@ -108,6 +108,7 @@ Pixel pixels[amount_of_pixels] = {Pixel{0, 0, 0, 0}};
 Pixel previous_pixels[amount_of_pixels] = {Pixel{0, 0, 0, 0}};
 
 // Function prototypes
+void demo_setup();
 void demo_loop();
 void mqtt_setup();
 void mqtt_loop();
@@ -152,7 +153,8 @@ void setup() {
 
   // Initialise program depending on mode
   if (mode == DEMO) {
-    // Demo mode doesn't need setup, so do nothing
+    // Run demo setup
+    demo_setup();
   } else if (mode == MQTT) {
     // Run mqtt setup
     mqtt_setup();
@@ -178,6 +180,19 @@ void loop() {
   }
 }
 
+void demo_setup() {
+  // Run demo setup
+  Serial.println("Running demo setup...");
+
+  // Audio seettings for demo mode (these don't change while running demo mode)
+  // Set sound
+  sound = "Sound-1";
+  // Set volume
+  volume = 15; // 15 = 50% volume
+  // Set audio loop
+  audio_loop = true;
+}
+
 // Demo loop function (loop for demo mode)
 void demo_loop() {
   // Update presence
@@ -198,10 +213,6 @@ void demo_loop() {
       }
       // Set audio to play
       audio_mode = 1;
-      // Set sound to "sound1"
-      sound = "Sound-1";
-      // Set volume to 15 (50%)
-      volume = 15;
     } else {
       // Set brightness to 1 (off)
       brightness = 1;
@@ -214,8 +225,6 @@ void demo_loop() {
       }
       // Set audio to stop
       audio_mode = 4;
-      // Set volume to 0
-      volume = 0;
     }
     // Update lights
     updateLights();
