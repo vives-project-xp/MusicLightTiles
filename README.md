@@ -1,6 +1,6 @@
 # MusicLightTiles
 
-![360° view](./media/360.gif)
+![360° view](./img/360.gif)
 
 ## About
 
@@ -58,11 +58,11 @@ The tiles are supported by a small rubber strip that compresses when you stand o
 This compression makes 2 conductive strips touch each other and close the circuit.
 The ESP32 can detect this and trigger the lights and music.
 
-![Person detection](./media/sectionview.png)
+![Person detection](./img/sectionview.png)
 
 ## Project canvas
 
-![Project canvas](./media/projectcanvas.jpg)
+![Project canvas](./img/projectcanvas.jpg)
 
 ## Team assignments
 
