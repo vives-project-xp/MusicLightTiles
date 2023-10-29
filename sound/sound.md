@@ -1,13 +1,14 @@
 # Sound
 
 This file describes the sound that corresponds to each file in the `sound` folder.
-There are 5 categories of sounds:
+There are 6 categories of sounds:
 
 - [Animals](#animals-0001---0010)
 - [Gaming](#gaming-0011---0030)
 - [Memes](#memes-0031---0040)
 - [Instruments](#instruments-0041---0060)
 - [TV and Movies](#tv-and-movies-0061---0080)
+- [Music](#music-0081---0100)
 
 ## Animals (0001 - 0010)
 
@@ -72,6 +73,12 @@ These are chords from instruments.
 These are sounds from TV-shows and movies.
 
 // TODO: Add TV and movie sounds.
+
+## Music (0081 - 0100)
+
+These are some songs.
+
+// TODO: Add music.
 
 ## Credits
 
