@@ -60,9 +60,9 @@ const char* commandTopic = "command";
 const int uptimeInterval = 1000; // interval in milliseconds to update uptime
 
 // Define device specific constants
-const int amount_of_pixels = 16; // amount of pixels in the led strip
+const int amount_of_pixels = 12; // amount of pixels in the led strip
 const char* firmware_version = "0.0.5";
-const char* hardware_version = "0.0.1";
+const char* hardware_version = "0.0.2";
 const Sound sounds[] = {
   Sound{1, "Sound-1"}, 
   Sound{2, "Sound-2"}, 
