@@ -6,7 +6,8 @@
 #include <Adafruit_NeoPixel.h>
 #include <DFRobotDFPlayerMini.h>
 
-#include "secret.h" // TODO: implement better way of storing and accessing secrets
+// Import secret.h (contains ssid, password, mqtt server, mqtt port, mqtt user and mqtt password)
+#include "secret.h"
 
 // Define mode enum (mode switch)
 enum Mode {
@@ -47,9 +48,9 @@ struct Pixel {
 // Define pin constants
 #define MODE_SWITCH_PIN 4  // pin for mode switch
 #define PRESENCE_PIN 5     // pin for presence detection
-#define LEDSTRIP_PIN 25    // pin for led strip
-#define RX_PIN 16          // pin rx, should be connected to tx of dfplayer
-#define TX_PIN 17          // pin tx, should be connected to rx of dfplayer
+#define LEDSTRIP_PIN 7     // pin for led strip
+#define RX_PIN 8           // pin rx, should be connected to tx of dfplayer
+#define TX_PIN 9           // pin tx, should be connected to rx of dfplayer
 
 // Define MQTT constants
 const char* rootTopic = "music-light-tiles";
@@ -60,7 +61,7 @@ const int uptimeInterval = 1000; // interval in milliseconds to update uptime
 
 // Define device specific constants
 const int amount_of_pixels = 16; // amount of pixels in the led strip
-const char* firmware_version = "0.0.4";
+const char* firmware_version = "0.0.5";
 const char* hardware_version = "0.0.1";
 const Sound sounds[] = {
   Sound{1, "Sound-1"}, 
@@ -85,7 +86,7 @@ DFRobotDFPlayerMini dfplayer;
 String device_name = "tile";
 
 bool reboot = false;
-bool ping = true; // TODO: should be false by default, but true for debugging purposes
+bool ping = true;
 unsigned long uptime = 0;
 unsigned long lastUptime = 0;
 
@@ -130,7 +131,7 @@ void setup() {
   pinMode(MODE_SWITCH_PIN, INPUT_PULLUP);
 
   // Set mode from button state
-  if (digitalRead(MODE_SWITCH_PIN) == HIGH) { // TODO: no contact defaults to mqtt, but should be demo (but mqtt can't get past connecting to wifi for some reason if demo is default)
+  if (digitalRead(MODE_SWITCH_PIN) == HIGH) {
     mode = DEMO;
   } else {
     mode = MQTT;
