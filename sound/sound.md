@@ -11,8 +11,8 @@ There are 6 categories of sounds:
 - [Music](#music-0081---0100)
 
 > [!NOTE]  
-> The player selects sounds based on file position, not file name.
-> This means that there can't be any gaps in the file names, or the selection will be off.
+> The mp3 player selects sounds based on sequence the files are copied to the SD card, not the file name.
+> This means that you can't bulk copy files to the SD card and that there can't be any gaps in the file names, or the selection will be off.
 
 ## Animals (0001 - 0010)
 
