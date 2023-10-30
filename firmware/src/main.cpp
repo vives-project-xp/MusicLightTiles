@@ -615,6 +615,8 @@ bool audioPlayerStateChanged(){
       Serial.println("Player is done playing");
       // Set audio state to idle
       audio_state = 0;
+      // Set audio mode to stop, since the player is done playing
+      audio_mode = 4;
       // State has changed, return true
       return true;
     } else {
@@ -669,7 +671,7 @@ String serializeState() {
   }
 
   JsonObject audio = doc.createNestedObject("audio");
-  audio["mode"] = audio_state;
+  audio["state"] = audio_state;
   audio["looping"] = audio_loop;
   audio["sound"] = sound;
   audio["volume"] = (volume / 30.0) * 100;  // Convert volume from 0-30 to 0-100
