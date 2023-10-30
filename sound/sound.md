@@ -10,6 +10,10 @@ There are 6 categories of sounds:
 - [TV and Movies](#tv-and-movies-0061---0080)
 - [Music](#music-0081---0100)
 
+> [!NOTE]  
+> The player selects sounds based on file position, not file name.
+> This means that there can't be any gaps in the file names, or the selection will be off.
+
 ## Animals (0001 - 0010)
 
 These are sounds of animals.
@@ -25,7 +29,7 @@ These are sounds of animals.
 - `0009.mp3`: A sheep baaing.
 - `0010.mp3`: A wolf howling.
 
-## Gaming (0011 - 0030)
+## Gaming (0011 - 0024)
 
 These are sounds from games.
 
@@ -44,48 +48,48 @@ These are sounds from games.
 - `0023.mp3`: GTA V wasted.
 - `0024.mp3`: GTA V phone ring.
 
-## Memes (0031 - 0040)
+## Memes (0025 - 0030)
 
 These are sounds from memes.
 
-- `0031.mp3`: Bruh sound effect.
-- `0032.mp3`: Emotional damage.
-- `0033.mp3`: Sad violin.
-- `0034.mp3`: Windows XP error.
-- `0035.mp3`: Windows XP shutdown.
-- `0036.mp3`: Windows XP startup.
+- `0025.mp3`: Bruh sound effect.
+- `0026.mp3`: Emotional damage.
+- `0027.mp3`: Sad violin.
+- `0028.mp3`: Windows XP error.
+- `0029.mp3`: Windows XP shutdown.
+- `0030.mp3`: Windows XP startup.
 
-## Instruments (0041 - 0060)
+## Instruments (0031 - 0042)
 
 These are chords from instruments.
 
-- `0041.mp3`: Piano C note.
-- `0042.mp3`: Piano C# note.
-- `0043.mp3`: Piano D note.
-- `0044.mp3`: Piano D# note.
-- `0045.mp3`: Piano E note.
-- `0046.mp3`: Piano F note.
-- `0047.mp3`: Piano F# note.
-- `0048.mp3`: Piano G note.
-- `0049.mp3`: Piano G# note.
-- `0050.mp3`: Piano A note.
-- `0051.mp3`: Piano A# note.
-- `0052.mp3`: Piano B note.
+- `0031.mp3`: Piano C note.
+- `0032.mp3`: Piano C# note.
+- `0033.mp3`: Piano D note.
+- `0034.mp3`: Piano D# note.
+- `0035.mp3`: Piano E note.
+- `0036.mp3`: Piano F note.
+- `0037.mp3`: Piano F# note.
+- `0038.mp3`: Piano G note.
+- `0039.mp3`: Piano G# note.
+- `0040.mp3`: Piano A note.
+- `0041.mp3`: Piano A# note.
+- `0042.mp3`: Piano B note.
 
-## TV and Movies (0061 - 0080)
+## TV and Movies (0043 - 0052)
 
 These are sounds from TV-shows and movies.
 
-- `0061.mp3`: Applause.
-- `0062.mp3`: Kids cheering.
-- `0063.mp3`: Crickets.
-- `0064.mp3`: Wheel spin.
-- `0065.mp3`: Wrong answer.
-- `0066.mp3`: Right answer.
-- `0067.mp3`: Intermission.
-- `0068.mp3`: The Office - That's what she said.
-- `0069.mp3`: The Office - No, God! No, God, please no! No! No! Nooooooo!
-- `0070.mp3`: Obi-Wan Kenobi - Hello there.
+- `0043.mp3`: Applause.
+- `0044.mp3`: Kids cheering.
+- `0045.mp3`: Crickets.
+- `0046.mp3`: Wheel spin.
+- `0047.mp3`: Wrong answer.
+- `0048.mp3`: Right answer.
+- `0049.mp3`: Intermission.
+- `0050.mp3`: The Office - That's what she said.
+- `0051.mp3`: The Office - No, God! No, God, please no! No! No! Nooooooo!
+- `0052.mp3`: Obi-Wan Kenobi - Hello there.
 
 ## Music (0081 - 0100)
 
