@@ -250,7 +250,7 @@ void demo_loop() {
     if (presence) {
       // Set brightness to 50
       brightness = 50;
-      // Fill sections with the color green
+      // Fill pixels with the color green
       for (int i = 0; i < amount_of_pixels; i++) {
         pixels[i].red = 0;
         pixels[i].green = 255;
@@ -262,7 +262,7 @@ void demo_loop() {
     } else {
       // Set brightness to 1 (off)
       brightness = 0;
-      // Fill sections with the color red
+      // Fill pixels with the color red
       //for (int i = 0; i < amount_of_pixels; i++) {
       //  pixels[i].red = 255;
       //  pixels[i].green = 0;
@@ -415,13 +415,13 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
   brightness = doc["light"]["brightness"];
 
-  JsonArray light_sections = doc["light"]["sections"];
+  JsonArray light_pixels = doc["light"]["pixels"];
   for (int i = 0; i < amount_of_pixels; i++) {
-    JsonObject section = light_sections[i];
-    pixels[i].red = section["r"];
-    pixels[i].green = section["g"];
-    pixels[i].blue = section["b"];
-    pixels[i].white = section["w"];
+    JsonObject pixel = light_pixels[i];
+    pixels[i].red = pixel["r"];
+    pixels[i].green = pixel["g"];
+    pixels[i].blue = pixel["b"];
+    pixels[i].white = pixel["w"];
   }
 }
 
@@ -628,7 +628,7 @@ bool audioPlayerStateChanged(){
 
 // Update lights function
 bool updateLights() {
-  // If brightness has changed or sections have changed (value in sections is different from previous value in sections)
+  // If brightness has changed or pixel colors have changed (value in pixels is different from previous value in pixels)
   if (brightness != previous_brightness || memcmp(pixels, previous_pixels, sizeof(pixels)) != 0) {
 
     Serial.println("Updating lights...");
@@ -676,13 +676,13 @@ String serializeState() {
   JsonObject light = doc.createNestedObject("light");
   light["brightness"] = brightness;
 
-  JsonArray light_sections = light.createNestedArray("sections");
+  JsonArray light_pixels = light.createNestedArray("pixels");
   for (int i = 0; i < amount_of_pixels; i++) {
-    JsonObject section = light_sections.createNestedObject();
-    section["r"] = pixels[i].red;
-    section["g"] = pixels[i].green;
-    section["b"] = pixels[i].blue;
-    section["w"] = pixels[i].white;
+    JsonObject pixel = light_pixels.createNestedObject();
+    pixel["r"] = pixels[i].red;
+    pixel["g"] = pixels[i].green;
+    pixel["b"] = pixels[i].blue;
+    pixel["w"] = pixels[i].white;
   }
 
   doc["detect"]["detected"] = presence;
