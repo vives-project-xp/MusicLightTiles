@@ -226,6 +226,7 @@ void loop() {
   }
 }
 
+// Demo setup function (setup for demo mode)
 void demo_setup() {
   // Run demo setup
   Serial.println("Running demo setup...");
@@ -305,7 +306,7 @@ void mqtt_setup() {
   Serial.println("Connected to WiFi as " + device_name);
 
   // Update MQTT settings
-  client.setBufferSize(1024); // Set MQTT packet buffer size
+  client.setBufferSize(3072); // Set MQTT packet buffer size
   client.setServer(mqtt_server, mqtt_port);
   client.setCallback(callback);
 
@@ -377,7 +378,7 @@ void mqtt_loop() {
   }
 
   // Wait a little bit (just for testing purposes, remove this later)
-  delay(100);
+  delay(10);
 }
 
 // MQTT callback function
