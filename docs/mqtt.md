@@ -62,7 +62,7 @@ This property has the following subproperties:
 | Property | Type | Description |
 | -------- | ---- | ----------- |
 | `brightness` | Number | The brightness of the full ledstrip. (0-255) |
-| `sections` | Array | The list of colors of each section, should have a format of {r: 0, g: 0, b: 0, w:0} for each section. |
+| `pixels` | Array | The list of colors of each pixel, should have a format of {r: 0, g: 0, b: 0, w:0} for each pixel. |
 
 #### Detect
 
@@ -84,7 +84,60 @@ Here is an example of how a full state payload should look.
     "hardware": "1.0.0",
     "ping": false,
     "uptime": 1234,
-    "sounds": ["sound-1", "sound-2", "sound-3"]
+    "sounds": [
+      "A cat meowing",
+      "A dog barking",
+      "A duck quacking",
+      "A frog croaking",
+      "A horse neighing",
+      "A pig grunt",
+      "A rooster crowing",
+      "A chicken clucking",
+      "A sheep baaing",
+      "A wolf howling",
+      "Minecraft villager",
+      "Minecraft creeper hissing",
+      "Minecraft explosion",
+      "Mario jump",
+      "Mario coin",
+      "Mario death",
+      "Among Us role reveal",
+      "Fortnite death",
+      "Roblox oof",
+      "CS:GO bomb planted",
+      "CS:GO bomb defused",
+      "GTA San Andreas - Here we go again",
+      "GTA V wasted",
+      "GTA V phone ring",
+      "Bruh sound effect",
+      "Emotional damage",
+      "Sad violin",
+      "Windows XP error",
+      "Windows XP shutdown",
+      "Windows XP startup",
+      "Piano C note",
+      "Piano C# note",
+      "Piano D note",
+      "Piano D# note",
+      "Piano E note",
+      "Piano F note",
+      "Piano F# note",
+      "Piano G note",
+      "Piano G# note",
+      "Piano A note",
+      "Piano A# note",
+      "Piano B note",
+      "Applause",
+      "Kids cheering",
+      "Crickets",
+      "Wheel spin",
+      "Wrong answer",
+      "Right answer",
+      "Intermission",
+      "The Office - That's what she said",
+      "The Office - No, God! No, God, please no! No! No! Nooooooo!",
+      "Obi-Wan Kenobi - Hello there"
+    ]
   },
   "audio": {
     "state": 2,
@@ -94,11 +147,7 @@ Here is an example of how a full state payload should look.
   },
   "light": {
     "brightness": 50,
-    "sections": [
-      {"r": 255, "g": 0, "b": 0, "w": 0},
-      {"r": 0, "g": 255, "b": 0, "w": 0},
-      {"r": 0, "g": 0, "b": 255, "w": 0},
-      {"r": 0, "g": 0, "b": 0, "w": 255},
+    "pixels": [
       {"r": 255, "g": 0, "b": 0, "w": 0},
       {"r": 0, "g": 255, "b": 0, "w": 0},
       {"r": 0, "g": 0, "b": 255, "w": 0},
@@ -155,7 +204,7 @@ This property has the following subproperties:
 | Property | Type | Description |
 | -------- | ---- | ----------- |
 | `brightness` | Number | The brightness the device should set. |
-| `sections` | Array | The list of colors of each section, should have a format of {r: 0, g: 0, b: 0, w:0} for each section. |
+| `pixels` | Array | The list of colors of each pixel, should have a format of {r: 0, g: 0, b: 0, w:0} for each pixel. |
 
 #### Example
 
@@ -170,16 +219,12 @@ Here is an example of how a full command payload should look.
   "audio": {
     "mode": 1,
     "loop": false,
-    "sound": "sound-1",
+    "sound": "Mario coin",
     "volume": 50
   },
   "light": {
     "brightness": 50,
-    "sections": [
-      {"r": 255, "g": 0, "b": 0, "w": 0},
-      {"r": 0, "g": 255, "b": 0, "w": 0},
-      {"r": 0, "g": 0, "b": 255, "w": 0},
-      {"r": 0, "g": 0, "b": 0, "w": 255},
+    "pixels": [
       {"r": 255, "g": 0, "b": 0, "w": 0},
       {"r": 0, "g": 255, "b": 0, "w": 0},
       {"r": 0, "g": 0, "b": 255, "w": 0},
