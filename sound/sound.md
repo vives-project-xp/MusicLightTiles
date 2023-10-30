@@ -40,7 +40,7 @@ These are sounds from games.
 - `0019.mp3`: Roblox oof.
 - `0020.mp3`: CS:GO bomb planted.
 - `0021.mp3`: CS:GO bomb defused.
-- `0022.mp3`: GTA San Andreas 'Here we go again'.
+- `0022.mp3`: GTA San Andreas - Here we go again.
 - `0023.mp3`: GTA V wasted.
 - `0024.mp3`: GTA V phone ring.
 
