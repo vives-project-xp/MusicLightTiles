@@ -49,7 +49,11 @@ These are sounds from games.
 These are sounds from memes.
 
 - `0031.mp3`: Bruh sound effect.
-// TODO: Add more meme sounds.
+- `0032.mp3`: Emotional damage.
+- `0033.mp3`: Sad violin.
+- `0034.mp3`: Windows XP error.
+- `0035.mp3`: Windows XP shutdown.
+- `0036.mp3`: Windows XP startup.
 
 ## Instruments (0041 - 0060)
 
@@ -72,7 +76,16 @@ These are chords from instruments.
 
 These are sounds from TV-shows and movies.
 
-// TODO: Add TV and movie sounds.
+- `0061.mp3`: Applause.
+- `0062.mp3`: Kids cheering.
+- `0063.mp3`: Crickets.
+- `0064.mp3`: Wheel spin.
+- `0065.mp3`: Wrong answer.
+- `0066.mp3`: Right answer.
+- `0067.mp3`: Intermission.
+- `0068.mp3`: The Office - That's what she said.
+- `0069.mp3`: The Office - No, God! No, God, please no! No! No! Nooooooo!
+- `0070.mp3`: Obi-Wan Kenobi - Hello there.
 
 ## Music (0081 - 0100)
 
