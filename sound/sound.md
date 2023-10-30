@@ -4,11 +4,11 @@ This file describes the sound that corresponds to each file in the `sound` folde
 There are 6 categories of sounds:
 
 - [Animals](#animals-0001---0010)
-- [Gaming](#gaming-0011---0030)
-- [Memes](#memes-0031---0040)
-- [Instruments](#instruments-0041---0060)
-- [TV and Movies](#tv-and-movies-0061---0080)
-- [Music](#music-0081---0100)
+- [Gaming](#gaming-0011---0024)
+- [Memes](#memes-0025---0030)
+- [Instruments](#instruments-0031---0042)
+- [TV and Movies](#tv-and-movies-0043---0052)
+- [Music](#music-0053---0100)
 
 > [!NOTE]  
 > The mp3 player selects sounds based on sequence the files are copied to the SD card, not the file name.
@@ -91,7 +91,7 @@ These are sounds from TV-shows and movies.
 - `0051.mp3`: The Office - No, God! No, God, please no! No! No! Nooooooo!
 - `0052.mp3`: Obi-Wan Kenobi - Hello there.
 
-## Music (0081 - 0100)
+## Music (0053 - 0100)
 
 These are some songs.
 
