@@ -61,16 +61,61 @@ const int uptimeInterval = 1000; // interval in milliseconds to update uptime
 
 // Define device specific constants
 const int amount_of_pixels = 12; // amount of pixels in the led strip
-const char* firmware_version = "0.0.5";
+const char* firmware_version = "0.0.6";
 const char* hardware_version = "0.0.2";
 const Sound sounds[] = {
-  Sound{1, "Sound-1"}, 
-  Sound{2, "Sound-2"}, 
-  Sound{3, "Sound-3"},
-  Sound{4, "Sound-4"},
-  Sound{5, "Sound-5"},
-  Sound{6, "Sound-6"},
-  Sound{7, "Sound-7"}
+  Sound{1, "A cat meowing"},
+  Sound{2, "A dog barking"},
+  Sound{3, "A duck quacking"},
+  Sound{4, "A frog croaking"},
+  Sound{5, "A horse neighing"},
+  Sound{6, "A pig grunt"},
+  Sound{7, "A rooster crowing"},
+  Sound{8, "A chicken clucking"},
+  Sound{9, "A sheep baaing"},
+  Sound{10, "A wolf howling"},
+  Sound{11, "Minecraft villager"},
+  Sound{12, "Minecraft creeper hissing"},
+  Sound{13, "Minecraft explosion"},
+  Sound{14, "Mario jump"},
+  Sound{15, "Mario coin"},
+  Sound{16, "Mario death"},
+  Sound{17, "Among Us role reveal"},
+  Sound{18, "Fortnite death"},
+  Sound{19, "Roblox oof"},
+  Sound{20, "CS:GO bomb planted"},
+  Sound{21, "CS:GO bomb defused"},
+  Sound{22, "GTA San Andreas - Here we go again"},
+  Sound{23, "GTA V wasted"},
+  Sound{24, "GTA V phone ring"},
+  Sound{31, "Bruh sound effect"},
+  Sound{32, "Emotional damage"},
+  Sound{33, "Sad violin"},
+  Sound{34, "Windows XP error"},
+  Sound{35, "Windows XP shutdown"},
+  Sound{36, "Windows XP startup"},
+  Sound{41, "Piano C note"},
+  Sound{42, "Piano C# note"},
+  Sound{43, "Piano D note"},
+  Sound{44, "Piano D# note"},
+  Sound{45, "Piano E note"},
+  Sound{46, "Piano F note"},
+  Sound{47, "Piano F# note"},
+  Sound{48, "Piano G note"},
+  Sound{49, "Piano G# note"},
+  Sound{50, "Piano A note"},
+  Sound{51, "Piano A# note"},
+  Sound{52, "Piano B note"},
+  Sound{61, "Applause"},
+  Sound{62, "Kids cheering"},
+  Sound{63, "Crickets"},
+  Sound{64, "Wheel spin"},
+  Sound{65, "Wrong answer"},
+  Sound{66, "Right answer"},
+  Sound{67, "Intermission"},
+  Sound{68, "The Office - That's what she said"},
+  Sound{69, "The Office - No, God! No, God, please no! No! No! Nooooooo!"},
+  Sound{70, "Obi-Wan Kenobi - Hello there"}
 }; // All sounds that can be played (available on the sd card of the dfplayer)
 const int amount_of_sounds = sizeof(sounds) / sizeof(sounds[0]);
 
@@ -609,7 +654,7 @@ bool updateLights() {
 
 // Serialize state function (serializes current state to JSON)
 String serializeState() {
-  StaticJsonDocument<2048> doc;
+  StaticJsonDocument<3072> doc;
 
   JsonObject system = doc.createNestedObject("system");
   system["firmware"] = firmware_version;
