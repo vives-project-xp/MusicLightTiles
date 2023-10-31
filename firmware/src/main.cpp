@@ -132,6 +132,7 @@ String device_name = "tile";
 
 bool reboot = false;
 bool ping = true;
+bool previous_ping = ping;
 unsigned long uptime = 0;
 unsigned long lastUptime = 0;
 
@@ -356,6 +357,12 @@ void mqtt_loop() {
   bool uptimeChanged = false;
   if (ping) {
     uptimeChanged = updateUptime();
+  } else if (previous_ping != ping) {
+    // Ping has changed from true to false, set uptime changed to true
+    uptimeChanged = true;
+    // Update previous ping
+    previous_ping = ping;
+    updateUptime();
   } else {
     updateUptime();
   }
