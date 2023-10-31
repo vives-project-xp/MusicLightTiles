@@ -108,7 +108,14 @@ class Tile:
     self._brightness = light["brightness"]
     pixels = light["pixels"]
     for i in range(len(pixels)):
+      # Add new pixels if needed
+      if i >= len(self._pixels):
+        self._pixels.append(Pixel())
+      # Update pixel
       self._pixels[i].from_dict(pixels[i])
+    # Remove extra unused pixels
+    if len(self._pixels) > len(pixels):
+      self._pixels = self._pixels[:len(pixels)]
 
     # Detection
     detection = state_json["detect"]
