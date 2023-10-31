@@ -120,3 +120,60 @@ class Tile:
     # Detection
     detection = state_json["detect"]
     self._detected = detection["detected"]
+
+  # Create a new command to send to the tile (using the state where no values are provided)
+  def create_command(
+      self, 
+      system_reboot: bool = False, 
+      system_ping: bool = None, 
+      audio_mode: int = None, 
+      audio_looping: bool = None, 
+      audio_sound: str = None, 
+      audio_volume: int = None, 
+      light_brightness: int = None, 
+      light_pixels: list[Pixel] = None
+    ) -> str:
+    """Create a command to send to the tile"""
+    # Replace None values with the current state
+    if system_ping is None:
+      system_ping = self._pinging
+    if audio_mode is None:
+      # TODO: Get the current audio mode
+      audio_mode = 4 # 4 = stop
+    if audio_looping is None:
+      audio_looping = self._audio_looping
+    if audio_sound is None:
+      audio_sound = self._audio_sound
+    if audio_volume is None:
+      audio_volume = self._audio_volume
+    if light_brightness is None:
+      light_brightness = self._brightness
+    if light_pixels is None:
+      light_pixels = self._pixels
+
+    # Convert the pixels to a list of dictionaries
+    light_pixels_dict: list[dict] = []
+    for pixel in light_pixels:
+      light_pixels_dict.append(pixel.to_dict())
+
+    # Create a dictionary to hold the command
+    command: dict = {
+      "system": {
+        "reboot": system_reboot,
+        "ping": system_ping
+      },
+      "audio": {
+        "mode": audio_mode,
+        "loop": audio_looping,
+        "sound": audio_sound,
+        "volume": audio_volume
+      },
+      "light": {
+        "brightness": light_brightness,
+        "pixels": light_pixels_dict
+      }
+    }
+
+    # Convert the dictionary to a JSON string
+    command_json: str = json.dumps(command)
+    return command_json
