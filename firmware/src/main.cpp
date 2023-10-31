@@ -277,9 +277,6 @@ void demo_loop() {
     // Update audio
     updateAudio();
   }
-
-  // Wait a little bit (TODO: just for testing purposes, remove this later)
-  delay(10);
 }
 
 // MQTT setup function (setup for MQTT mode)
@@ -362,9 +359,6 @@ void mqtt_loop() {
   if (updatePresence()) {
     client.publish((stateTopic + "/presence").c_str(), getPresenceState().c_str());
   }
-
-  // Wait a little bit (TODO: just for testing purposes, remove this later)
-  delay(10);
 }
 
 // MQTT callback function
