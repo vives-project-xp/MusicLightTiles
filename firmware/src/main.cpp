@@ -54,8 +54,6 @@ struct Pixel {
 
 // Define MQTT constants
 const char* rootTopic = "music-light-tiles";
-const char* stateTopic = "state";
-const char* commandTopic = "command";
 
 const int uptimeInterval = 1000; // interval in milliseconds to update uptime
 
@@ -129,6 +127,8 @@ DFRobotDFPlayerMini dfplayer;
 
 // Define global variables
 String device_name = "tile";
+String stateTopic = "state";
+String commandTopic = "command";
 
 bool reboot = false;
 bool ping = true;
@@ -160,13 +160,20 @@ void demo_loop();
 void mqtt_setup();
 void mqtt_loop();
 void callback(char* topic, byte* payload, unsigned int length);
-void updateState();
+void connectToWifi();
+void disconnectFromWifi();
+void connectToMqtt();
+void disconnectFromMqtt();
+bool updateSystem();
 bool updateUptime();
-bool updatePresence();
+String getSystemState();
 bool updateAudio();
 bool audioPlayerStateChanged();
+String getAudioState();
 bool updateLights();
-String serializeState();
+String getLightState();
+bool updatePresence();
+String getPresenceState();
 
 // Setup function
 void setup() {
@@ -223,7 +230,7 @@ void loop() {
   } else {
     // Something went wrong, print error and do nothing
     Serial.println("Unknown mode, doing nothing...");
-    delay(1000); // Wait some time to prevent spamming the serial monitor
+    delay(1000); // Wait some time to prevent spamming the serial monitor with errors
   }
 }
 
@@ -243,16 +250,13 @@ void demo_setup() {
 
 // Demo loop function (loop for demo mode)
 void demo_loop() {
-  // Update presence
-  bool presenceChanged = updatePresence();
-
   // If presence has changed
-  if (presenceChanged) {
-    // If presence is true
+  if (updatePresence()) {
+    // If presence is detected
     if (presence) {
       // Set brightness to 50
       brightness = 50;
-      // Fill pixels with the color green
+      // Fill all pixels with the color green
       for (int i = 0; i < amount_of_pixels; i++) {
         pixels[i].red = 0;
         pixels[i].green = 255;
@@ -262,15 +266,8 @@ void demo_loop() {
       // Set audio to play
       audio_mode = 1;
     } else {
-      // Set brightness to 1 (off)
+      // Set brightness to 0 (off)
       brightness = 0;
-      // Fill pixels with the color red
-      //for (int i = 0; i < amount_of_pixels; i++) {
-      //  pixels[i].red = 255;
-      //  pixels[i].green = 0;
-      //  pixels[i].blue = 0;
-      //  pixels[i].white = 0;
-      //}
       // Set audio to stop
       audio_mode = 4;
     }
@@ -280,9 +277,6 @@ void demo_loop() {
     // Update audio
     updateAudio();
   }
-
-  // Wait a little bit (just for testing purposes, remove this later)
-  delay(10);
 }
 
 // MQTT setup function (setup for MQTT mode)
@@ -295,52 +289,41 @@ void mqtt_setup() {
   mac.replace(":", "");
   device_name = mac;
 
-  // Connect to Wi-Fi as default device name
+  // Set state and command topics
+  stateTopic = String(rootTopic) + "/" + String(device_name) + "/state";
+  commandTopic = String(rootTopic) + "/" + String(device_name) + "/command";
+
+  // Set wifi hostname to device name
   WiFi.setHostname(device_name.c_str());
 
   // Connect to Wi-Fi
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(1000);
-    Serial.println("Connecting to WiFi as " + device_name + "...");
-  }
-  Serial.println("Connected to WiFi as " + device_name);
+  connectToWifi();
 
   // Update MQTT settings
-  client.setBufferSize(3072); // Set MQTT packet buffer size
+  client.setBufferSize(2048); // Set MQTT packet buffer size
   client.setServer(mqtt_server, mqtt_port);
   client.setCallback(callback);
 
   // Connect to MQTT broker
-  while (!client.connected()) {
-    if (client.connect(device_name.c_str(), mqtt_user, mqtt_password, (String(rootTopic) + "/" + String(device_name)).c_str(), 1, true, String("OFFLINE").c_str())) {
-      Serial.println("Connected to MQTT broker as " + String(device_name));
-      client.publish((String(rootTopic) + "/" + String(device_name)).c_str(), String("ONLINE").c_str(), true);
-      client.publish((String(rootTopic) + "/" + String(device_name) + "/" + String(stateTopic)).c_str(), serializeState().c_str());
-      client.subscribe((String(rootTopic) + "/" + String(device_name) + "/" + String(commandTopic)).c_str());
-      Serial.println("Connected to MQTT broker as " + String(device_name));
-    } else {
-      Serial.println("Failed to connect to MQTT broker, retrying in 5 seconds...");
-      delay(5000);
-    }
-  }
+  connectToMqtt();
 }
 
 // MQTT loop function (loop for MQTT mode)
 void mqtt_loop() {
-  // If not connected to MQTT broker or Wi-Fi, reconnect
-  if (!client.connected() || !WiFi.isConnected()) {
-    // Try to disconnect from MQTT broker
-    if (client.connected()) {
-      client.publish((String(rootTopic) + "/" + String(device_name)).c_str(), String("OFFLINE").c_str());
-      client.disconnect();
-    }
-    // Try to disconnect from Wi-Fi
-    if (WiFi.isConnected()) {
-      WiFi.disconnect();
-    }
-    // Rerun MQTT setup (reconnect to MQTT broker and Wi-Fi)
-    mqtt_setup();
+  // If not connected to MQTT broker, try to connect
+  if (!client.connected()) {
+    // Disconnect from MQTT broker
+    disconnectFromMqtt();
+    // Connect to MQTT broker
+    connectToMqtt();
+  }
+
+  // If not connected to Wi-Fi, try to connect
+  if (WiFi.status() != WL_CONNECTED) {
+    // Disconnect from Wi-Fi
+    disconnectFromWifi();
+    // Connect to Wi-Fi
+    connectToWifi();
   }
 
   // Keep the MQTT connection alive look for incoming messages
@@ -349,87 +332,173 @@ void mqtt_loop() {
   // If reboot is true, reboot
   if (reboot) {
     Serial.println("Rebooting...");
-    client.publish((String(rootTopic) + "/" + String(device_name)).c_str(), String("OFFLINE").c_str(), true);
+    // Disconnect from MQTT broker
+    disconnectFromMqtt();
+    // Disconnect from Wi-Fi
+    disconnectFromWifi();
+    // Reboot
     ESP.restart();
   }
 
-  // Update uptime
-  bool uptimeChanged = false;
-  if (ping) {
-    uptimeChanged = updateUptime();
-  } else if (previous_ping != ping) {
-    // Ping has changed from true to false, set uptime changed to true
-    uptimeChanged = true;
-    // Update previous ping
-    previous_ping = ping;
-    updateUptime();
-  } else {
-    updateUptime();
+  // Update system
+  if (updateSystem()) {
+    client.publish((stateTopic + "/system").c_str(), getSystemState().c_str());
+  }
+
+  // Update audio
+  if (updateAudio() || audioPlayerStateChanged()) {
+    client.publish((stateTopic + "/audio").c_str(), getAudioState().c_str());
+  }
+
+  // Update lights
+  if (updateLights()) {
+    client.publish((stateTopic + "/light").c_str(), getLightState().c_str());
   }
 
   // Update presence
-  bool presenceChanged = updatePresence();
-
-  // Update audio
-  bool audioChanged = updateAudio();
-
-  // Read player state
-  bool playerStateChanged = audioPlayerStateChanged();
-
-  // Update lights
-  bool lightsChanged = updateLights();
-
-  // If state has changed, publish new state
-  if (uptimeChanged || audioChanged || lightsChanged || presenceChanged || playerStateChanged) {
-    client.publish((String(rootTopic) + "/" + String(device_name) + "/" + String(stateTopic)).c_str(), serializeState().c_str());
+  if (updatePresence()) {
+    client.publish((stateTopic + "/presence").c_str(), getPresenceState().c_str());
   }
-
-  // Wait a little bit (just for testing purposes, remove this later)
-  delay(10);
 }
 
 // MQTT callback function
 void callback(char* topic, byte* payload, unsigned int length) {
   // Print the topic and payload for debugging purposes
   Serial.println("Message arrived in topic: " + String(topic));
-  Serial.println("Message: " + String((char*)payload));
+  //Serial.println("Message: " + String((char*)payload));
 
-  // Validate topic
-  if (String(topic) != String(rootTopic) + "/" + String(device_name) + "/" + String(commandTopic)) {
-    Serial.println("Invalid topic, ignoring message...");
-    return;
+  // Parse commands from payload for each subtopic
+  if (String(topic) == commandTopic + "/system") 
+  {
+    StaticJsonDocument<32> doc;
+    DeserializationError error = deserializeJson(doc, payload, length);
+    if (error) {
+      Serial.print("deserializeJson() failed: ");
+      Serial.println(error.c_str());
+      return;
+    }
+
+    reboot = doc["reboot"];
+    ping = doc["ping"];
+  } 
+  else if (String(topic) == commandTopic + "/audio") 
+  {
+    StaticJsonDocument<64> doc;
+    DeserializationError error = deserializeJson(doc, payload, length);
+    if (error) {
+      Serial.print("deserializeJson() failed: ");
+      Serial.println(error.c_str());
+      return;
+    }
+
+    audio_mode = doc["mode"];
+    audio_loop = doc["loop"];
+    sound = (const char*)doc["sound"];
+    volume = ((int)doc["volume"] / 100.0) * 30;  // Convert volume from 0-100 to 0-30
+  } 
+  else if (String(topic) == commandTopic + "/light") 
+  {
+    StaticJsonDocument<1024> doc;
+    DeserializationError error = deserializeJson(doc, payload, length);
+    if (error) {
+      Serial.print("deserializeJson() failed: ");
+      Serial.println(error.c_str());
+      return;
+    }
+
+    brightness = doc["brightness"];
+
+    JsonArray light_pixels = doc["pixels"];
+    for (int i = 0; i < amount_of_pixels; i++) {
+      JsonObject pixel = light_pixels[i];
+      pixels[i].red = pixel["r"];
+      pixels[i].green = pixel["g"];
+      pixels[i].blue = pixel["b"];
+      pixels[i].white = pixel["w"];
+    }
   }
-
-  // TODO: validate payload values (check if values are possible)
-  // Deserialize JSON
-  StaticJsonDocument<1536> doc;
-  DeserializationError error = deserializeJson(doc, payload, length);
-
-  if (error) {
-    Serial.print("deserializeJson() failed: ");
-    Serial.println(error.c_str());
-    return;
+  else {
+    Serial.println("Unknown topic, doing nothing...");
+    Serial.println("commandTopic: " + String(commandTopic));
   }
+}
 
-  JsonObject system = doc["system"];
-  reboot = system["reboot"];
-  ping = system["ping"];
+// Connect to wifi function
+void connectToWifi() {
+  // Connect to Wi-Fi
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.println("Connecting to WiFi as " + device_name + "...");
+  }
+  Serial.println("Connected to WiFi as " + device_name);
+}
 
-  JsonObject audio = doc["audio"];
-  audio_mode = audio["mode"];
-  audio_loop = audio["loop"];
-  sound = (const char*)audio["sound"];
-  volume = ((int)audio["volume"] / 100.0) * 30;  // Convert volume from 0-100 to 0-30
+// Disconnect from wifi function
+void disconnectFromWifi() {
+  // Disconnect from Wi-Fi
+  WiFi.disconnect();
+  while (WiFi.status() == WL_CONNECTED) {
+    delay(1000);
+    Serial.println("Disconnecting from WiFi as " + device_name + "...");
+  }
+  Serial.println("Disconnected from WiFi as " + device_name);
+}
 
-  brightness = doc["light"]["brightness"];
+// Connect to MQTT broker function
+void connectToMqtt() {
+  // Connect to MQTT broker
+  while (!client.connected()) {
+    if (client.connect(device_name.c_str(), mqtt_user, mqtt_password, (String(rootTopic) + "/" + String(device_name)).c_str(), 1, true, String("OFFLINE").c_str())) {
+      Serial.println("Connected to MQTT broker as " + String(device_name));
+      // Publish online message
+      client.publish((String(rootTopic) + "/" + String(device_name)).c_str(), String("ONLINE").c_str(), true);
+      // Publish initial state
+      client.publish((stateTopic + "/system").c_str(), getSystemState().c_str());
+      client.publish((stateTopic + "/audio").c_str(), getAudioState().c_str());
+      client.publish((stateTopic + "/light").c_str(), getLightState().c_str());
+      client.publish((stateTopic + "/presence").c_str(), getPresenceState().c_str());
+      // Subscribe to command subtopic
+      client.subscribe((commandTopic + "/#").c_str());
+      Serial.println("Connected to MQTT broker as " + String(device_name));
+    } else {
+      Serial.println("Failed to connect to MQTT broker, retrying in 5 seconds...");
+      delay(5000);
+    }
+  }
+}
 
-  JsonArray light_pixels = doc["light"]["pixels"];
-  for (int i = 0; i < amount_of_pixels; i++) {
-    JsonObject pixel = light_pixels[i];
-    pixels[i].red = pixel["r"];
-    pixels[i].green = pixel["g"];
-    pixels[i].blue = pixel["b"];
-    pixels[i].white = pixel["w"];
+// Disconnect from MQTT broker function
+void disconnectFromMqtt() {
+  // Disconnect from MQTT broker
+  if (client.connected()) {
+    // Publish offline message
+    client.publish((String(rootTopic) + "/" + String(device_name)).c_str(), String("OFFLINE").c_str(), true);
+    // Disconnect from MQTT broker
+    client.disconnect();
+    while (client.connected()) {
+      delay(1000);
+      Serial.println("Disconnecting from MQTT broker as " + String(device_name) + "...");
+    }
+    Serial.println("Disconnected from MQTT broker as " + String(device_name));
+  }
+}
+
+// Update system function
+bool updateSystem() {
+  if (ping) {
+    return updateUptime();
+  } else if (previous_ping != ping) {
+    // Ping has changed
+    updateUptime();
+    // Update previous ping
+    previous_ping = ping;
+    // State has changed, return true
+    return true;
+  } else {
+    updateUptime();
+    // State hasn't changed, return false
+    return false;
   }
 }
 
@@ -452,21 +521,23 @@ bool updateUptime() {
   }
 }
 
-// Update presence function
-bool updatePresence() {
-  // Update presence
-  presence = digitalRead(PRESENCE_PIN);
-  // If presence has changed
-  if (presence != previous_presence) {
-    Serial.println("Updating presence...");
-    // Update previous presence
-    previous_presence = presence;
-    // State has changed, return true
-    return true;
-  } else {
-    // State hasn't changed, return false
-    return false;
+// Get system state function (returns system state as JSON)
+String getSystemState() {
+  StaticJsonDocument<2048> doc;
+
+  doc["firmware"] = firmware_version;
+  doc["hardware"] = hardware_version;
+  doc["ping"] = ping;
+  doc["uptime"] = uptime;
+
+  JsonArray system_sounds = doc.createNestedArray("sounds");
+  for (int i = 0; i < amount_of_sounds; i++) {
+    system_sounds.add(sounds[i].name);
   }
+
+  String output;
+  serializeJson(doc, output);
+  return output;
 }
 
 // Update audio function
@@ -636,6 +707,20 @@ bool audioPlayerStateChanged(){
   }
 }
 
+// Get audio state function (returns audio state as JSON)
+String getAudioState() {
+  StaticJsonDocument<96> doc;
+
+  doc["state"] = audio_state;
+  doc["looping"] = audio_loop;
+  doc["sound"] = sound;
+  doc["volume"] = (volume / 30.0) * 100;  // Convert volume from 0-30 to 0-100
+
+  String output;
+  serializeJson(doc, output);
+  return output;
+}
+
 // Update lights function
 bool updateLights() {
   // If brightness has changed or pixel colors have changed (value in pixels is different from previous value in pixels)
@@ -662,31 +747,13 @@ bool updateLights() {
   }
 }
 
-// Serialize state function (serializes current state to JSON)
-String serializeState() {
-  StaticJsonDocument<3072> doc;
+// Get light state function (returns light state as JSON)
+String getLightState() {
+  StaticJsonDocument<1024> doc;
 
-  JsonObject system = doc.createNestedObject("system");
-  system["firmware"] = firmware_version;
-  system["hardware"] = hardware_version;
-  system["ping"] = ping;
-  system["uptime"] = uptime;
+  doc["brightness"] = brightness;
 
-  JsonArray system_sounds = system.createNestedArray("sounds");
-  for (int i = 0; i < amount_of_sounds; i++) {
-    system_sounds.add(sounds[i].name);
-  }
-
-  JsonObject audio = doc.createNestedObject("audio");
-  audio["state"] = audio_state;
-  audio["looping"] = audio_loop;
-  audio["sound"] = sound;
-  audio["volume"] = (volume / 30.0) * 100;  // Convert volume from 0-30 to 0-100
-
-  JsonObject light = doc.createNestedObject("light");
-  light["brightness"] = brightness;
-
-  JsonArray light_pixels = light.createNestedArray("pixels");
+  JsonArray light_pixels = doc.createNestedArray("pixels");
   for (int i = 0; i < amount_of_pixels; i++) {
     JsonObject pixel = light_pixels.createNestedObject();
     pixel["r"] = pixels[i].red;
@@ -695,7 +762,33 @@ String serializeState() {
     pixel["w"] = pixels[i].white;
   }
 
-  doc["detect"]["detected"] = presence;
+  String output;
+  serializeJson(doc, output);
+  return output;
+}
+
+// Update presence function
+bool updatePresence() {
+  // Update presence
+  presence = digitalRead(PRESENCE_PIN);
+  // If presence has changed
+  if (presence != previous_presence) {
+    Serial.println("Updating presence...");
+    // Update previous presence
+    previous_presence = presence;
+    // State has changed, return true
+    return true;
+  } else {
+    // State hasn't changed, return false
+    return false;
+  }
+}
+
+// Get presence state function (returns presence state as JSON)
+String getPresenceState() {
+  StaticJsonDocument<16> doc;
+
+  doc["detected"] = presence;
 
   String output;
   serializeJson(doc, output);
