@@ -104,12 +104,14 @@ if __name__== "__main__":
     client.publish(BASE_TOPIC+"/"+tile.device_name+"/command", tile.create_command(system_ping=False))
     while tile.pinging:
       time.sleep(1)
+
+  print("All tiles have ping set to off")
     
   # Set all tiles to the same brightness
   for tile in online_tiles:
     client.publish(BASE_TOPIC+"/"+tile.device_name+"/command", tile.create_command(light_brightness=100))
     while tile.brightness != 100:
-      time.sleep(0.1)
+      time.sleep(1)
 
   print("All tiles have the same brightness")
   
@@ -118,7 +120,7 @@ if __name__== "__main__":
     pixels = [Pixel() for i in range(len(tile.pixels))]
     client.publish(BASE_TOPIC+"/"+tile.device_name+"/command", tile.create_command(light_pixels=pixels))
     while tile.pixels[0].red != 0 or tile.pixels[0].green != 0 or tile.pixels[0].blue != 0:
-      time.sleep(0.1)
+      time.sleep(1)
 
   print("All tiles have been set to black")
 
@@ -137,14 +139,14 @@ if __name__== "__main__":
   while True:
     print("Counter: " + str(counter))
     for tile in online_tiles:
-      pixels = tile.pixels[1:] + tile.pixels[:1]
+      pixels = tile.pixels[-1:] + tile.pixels[:-1]
       client.publish(BASE_TOPIC+"/"+tile.device_name+"/command", tile.create_command(light_pixels=pixels))
 
     if counter == len(online_tiles[0].pixels) - 1:
       counter = 0
     else:
       counter += 1
-    time.sleep(1)
+    time.sleep(0.1)
     
 
 
