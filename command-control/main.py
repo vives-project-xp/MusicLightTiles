@@ -49,8 +49,8 @@ def on_message(client, userdata, msg):
   if tile == None:
     tile = Tile(tile_name)
     tiles.append(tile)
-    # Subscribe to the tile's state
-    client.subscribe(BASE_TOPIC+"/"+tile_name+"/state")
+    # Subscribe to the tile's state subtopics
+    client.subscribe(BASE_TOPIC+"/"+tile_name+"/state/+")
 
   # Check if topic ends with tile name
   if topic_parts[-1] == tile_name:
@@ -61,9 +61,24 @@ def on_message(client, userdata, msg):
       tile.online = False
     return
   
-  # Check if topic is state
-  if topic_parts[2] == "state":
-    tile.update_state(payload)
+  # Check if topic ends with "system"
+  if topic_parts[-1] == "system":
+    tile.update_system_state(payload)
+    return
+  
+  # Check if topic ends with "audio"
+  if topic_parts[-1] == "audio":
+    tile.update_audio_state(payload)
+    return
+  
+  # Check if topic ends with "light"
+  if topic_parts[-1] == "light":
+    tile.update_light_state(payload)
+    return
+  
+  # Check if topic ends with "presence"
+  if topic_parts[-1] == "presence":
+    tile.update_presence_state(payload)
     return
 
 # Main
@@ -101,7 +116,7 @@ if __name__== "__main__":
 
   # Set ping of all tiles to off
   for tile in online_tiles:
-    client.publish(BASE_TOPIC+"/"+tile.device_name+"/command", tile.create_command(system_ping=False))
+    client.publish(BASE_TOPIC+"/"+tile.device_name+"/command/system", tile.create_system_command(ping=False))
     while tile.pinging:
       time.sleep(1)
 
@@ -109,7 +124,7 @@ if __name__== "__main__":
     
   # Set all tiles to the same brightness
   for tile in online_tiles:
-    client.publish(BASE_TOPIC+"/"+tile.device_name+"/command", tile.create_command(light_brightness=100))
+    client.publish(BASE_TOPIC+"/"+tile.device_name+"/command/light", tile.create_light_command(brightness=100))
     while tile.brightness != 100:
       time.sleep(1)
 
@@ -118,7 +133,7 @@ if __name__== "__main__":
   # Set all tiles to the same color (black)
   for tile in online_tiles:
     pixels = [Pixel() for i in range(len(tile.pixels))]
-    client.publish(BASE_TOPIC+"/"+tile.device_name+"/command", tile.create_command(light_pixels=pixels))
+    client.publish(BASE_TOPIC+"/"+tile.device_name+"/command/light", tile.create_light_command(pixels=pixels))
     while tile.pixels[0].red != 0 or tile.pixels[0].green != 0 or tile.pixels[0].blue != 0:
       time.sleep(1)
 
@@ -128,7 +143,7 @@ if __name__== "__main__":
   for tile in online_tiles:
     pixels = [Pixel() for i in range(len(tile.pixels))]
     pixels[0].red = 255
-    client.publish(BASE_TOPIC+"/"+tile.device_name+"/command", tile.create_command(light_pixels=pixels))
+    client.publish(BASE_TOPIC+"/"+tile.device_name+"/command/light", tile.create_light_command(pixels=pixels))
     while tile.pixels[0].red != 255:
       time.sleep(0.1)
 
@@ -140,14 +155,12 @@ if __name__== "__main__":
     print("Counter: " + str(counter))
     for tile in online_tiles:
       pixels = tile.pixels[-1:] + tile.pixels[:-1]
-      client.publish(BASE_TOPIC+"/"+tile.device_name+"/command", tile.create_command(light_pixels=pixels))
+      client.publish(BASE_TOPIC+"/"+tile.device_name+"/command/light", tile.create_light_command(pixels=pixels))
+      while tile.pixels[counter].red != 255:
+        time.sleep(0.0001)
 
     if counter == len(online_tiles[0].pixels) - 1:
       counter = 0
     else:
       counter += 1
-    time.sleep(0.1)
-    
-
-
-
+    time.sleep(0.001)
