@@ -3,6 +3,8 @@ from tile import Tile
 from pixel import Pixel
 import os
 import time
+#import asyncio
+#import websockets
 from dotenv import load_dotenv
 
 load_dotenv()
