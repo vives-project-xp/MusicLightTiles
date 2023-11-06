@@ -241,9 +241,9 @@ void demo_setup() {
 
   // Audio seettings for demo mode (these don't change while running demo mode)
   // Set sound
-  sound = "Sound-1";
+  sound = "Windows XP error";
   // Set volume
-  volume = 15; // 15 = 50% volume
+  volume = 25; // 15 = 50% volume
   // Set audio loop
   audio_loop = true;
 }
