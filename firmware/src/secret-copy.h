@@ -2,11 +2,13 @@
 #ifndef SECRETS_H
 #define SECRETS_H
 
-const char* ssid = "ssid";
-const char* password = "wifiPassword";
-const char* mqtt_server = "mqtt.example.com";
+#include <Arduino.h>
+
+const char* ssid = "";
+const char* password = "";
+const char* mqtt_server = "";
 const int mqtt_port = 1883;
-const char* mqtt_user = "mqttUser";
-const char* mqtt_password = "mqttPassword";
+const char* mqtt_user = NULL; // Uses device_name if NULL
+const char* mqtt_password = "";
 
 #endif

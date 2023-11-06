@@ -53,7 +53,7 @@ struct Pixel {
 #define TX_PIN 9           // pin tx, should be connected to rx of dfplayer
 
 // Define MQTT constants
-const char* rootTopic = "music-light-tiles";
+const char* rootTopic = "PM/MLT";
 
 const int uptimeInterval = 1000; // interval in milliseconds to update uptime
 
@@ -290,8 +290,8 @@ void mqtt_setup() {
   device_name = mac;
 
   // Set state and command topics
-  stateTopic = String(rootTopic) + "/" + String(device_name) + "/state";
-  commandTopic = String(rootTopic) + "/" + String(device_name) + "/command";
+  stateTopic = String(rootTopic) + "/" + String(device_name) + "/self/state";
+  commandTopic = String(rootTopic) + "/" + String(device_name) + "/self/command";
 
   // Set wifi hostname to device name
   WiFi.setHostname(device_name.c_str());
@@ -447,12 +447,16 @@ void disconnectFromWifi() {
 
 // Connect to MQTT broker function
 void connectToMqtt() {
+  // Replace mqtt user with device name if mqtt user is NULL
+  if (mqtt_user == NULL) {
+    mqtt_user = device_name.c_str();
+  }
   // Connect to MQTT broker
   while (!client.connected()) {
-    if (client.connect(device_name.c_str(), mqtt_user, mqtt_password, (String(rootTopic) + "/" + String(device_name)).c_str(), 1, true, String("OFFLINE").c_str())) {
+    if (client.connect(device_name.c_str(), mqtt_user, mqtt_password, (String(rootTopic) + "/" + String(device_name) + "/self").c_str(), 1, true, String("OFFLINE").c_str())) {
       Serial.println("Connected to MQTT broker as " + String(device_name));
       // Publish online message
-      client.publish((String(rootTopic) + "/" + String(device_name)).c_str(), String("ONLINE").c_str(), true);
+      client.publish((String(rootTopic) + "/" + String(device_name) + "/self").c_str(), String("ONLINE").c_str(), true);
       // Publish initial state
       client.publish((stateTopic + "/system").c_str(), getSystemState().c_str());
       client.publish((stateTopic + "/audio").c_str(), getAudioState().c_str());
@@ -473,7 +477,7 @@ void disconnectFromMqtt() {
   // Disconnect from MQTT broker
   if (client.connected()) {
     // Publish offline message
-    client.publish((String(rootTopic) + "/" + String(device_name)).c_str(), String("OFFLINE").c_str(), true);
+    client.publish((String(rootTopic) + "/" + String(device_name) + "/self").c_str(), String("OFFLINE").c_str(), true);
     // Disconnect from MQTT broker
     client.disconnect();
     while (client.connected()) {
