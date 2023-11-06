@@ -12,9 +12,9 @@ load_dotenv()
 # Constants
 HOST: str = os.getenv("MQTT_SERVER")
 PORT: int = int(os.getenv("MQTT_PORT"))
-#MQTT_USER = os.getenv("MQTT_USERNAME")
-#MQTT_PASS = os.getenv("MQTT_PASSWORD")
-BASE_TOPIC = "music-light-tiles"
+MQTT_USER = os.getenv("MQTT_USERNAME")
+MQTT_PASS = os.getenv("MQTT_PASSWORD")
+BASE_TOPIC = "PM/MLT"
 
 # Variables
 tiles: list[Tile] = []
@@ -52,10 +52,14 @@ def on_message(client, userdata, msg):
     tile = Tile(tile_name)
     tiles.append(tile)
     # Subscribe to the tile's state subtopics
-    client.subscribe(BASE_TOPIC+"/"+tile_name+"/state/+")
+    client.subscribe(BASE_TOPIC+"/"+tile_name+"/self/state/+")
+    # Subscribe to the project master's command subtopics
+    client.subscribe(BASE_TOPIC+"/"+tile_name+"/command")
+    client.subscribe(BASE_TOPIC+"/"+tile_name+"/rgb")
+    client.subscribe(BASE_TOPIC+"/"+tile_name+"/effect")
 
-  # Check if topic ends with tile name
-  if topic_parts[-1] == tile_name:
+  # Check if topic ends with self
+  if topic_parts[-1] == "self":
     # Check if payload is online or offline
     if payload == "ONLINE":
       tile.online = True
@@ -63,32 +67,50 @@ def on_message(client, userdata, msg):
       tile.online = False
     return
   
-  # Check if topic ends with "system"
-  if topic_parts[-1] == "system":
-    tile.update_system_state(payload)
+  # Check if topic comes from self
+  if topic_parts[-3] == "self" and topic_parts[-2] == "state":
+    # Check if topic ends with "system"
+    if topic_parts[-1] == "system":
+      tile.update_system_state(payload)
+      return
+
+    # Check if topic ends with "audio"
+    if topic_parts[-1] == "audio":
+      tile.update_audio_state(payload)
+      return
+
+    # Check if topic ends with "light"
+    if topic_parts[-1] == "light":
+      tile.update_light_state(payload)
+      return
+
+    # Check if topic ends with "presence"
+    if topic_parts[-1] == "presence":
+      tile.update_presence_state(payload)
+      return
+    
+  # Check if topic comes from project master
+  if topic_parts[-1] == "command":
+    # TODO: Process command
     return
-  
-  # Check if topic ends with "audio"
-  if topic_parts[-1] == "audio":
-    tile.update_audio_state(payload)
+
+  if topic_parts[-1] == "rgb":
+    # TODO: Process rgb
     return
-  
-  # Check if topic ends with "light"
-  if topic_parts[-1] == "light":
-    tile.update_light_state(payload)
+
+  if topic_parts[-1] == "effect":
+    # TODO: Process effect
     return
-  
-  # Check if topic ends with "presence"
-  if topic_parts[-1] == "presence":
-    tile.update_presence_state(payload)
-    return
+
 
 # Main
 if __name__== "__main__":
   # Setup MQTT client
-  client = mqtt.Client(client_id="controller", clean_session=True)
+  # Create client of type mqtt.Client with client_id="CONTROLLER" and clean_session=True
+  client = mqtt.Client(client_id="CONTROLLER", clean_session=True)
   client.on_connect = on_connect
   client.on_message = on_message
+  client.username_pw_set(MQTT_USER, MQTT_PASS)
 
   # Connect to MQTT server
   client.connect(HOST, PORT, 60)
@@ -118,7 +140,7 @@ if __name__== "__main__":
 
   # Set ping of all tiles to off
   for tile in online_tiles:
-    client.publish(BASE_TOPIC+"/"+tile.device_name+"/command/system", tile.create_system_command(ping=False))
+    client.publish(BASE_TOPIC+"/"+tile.device_name+"/self/command/system", tile.create_system_command(ping=False))
     while tile.pinging:
       time.sleep(1)
 
@@ -126,7 +148,7 @@ if __name__== "__main__":
     
   # Set all tiles to the same brightness
   for tile in online_tiles:
-    client.publish(BASE_TOPIC+"/"+tile.device_name+"/command/light", tile.create_light_command(brightness=100))
+    client.publish(BASE_TOPIC+"/"+tile.device_name+"/self/command/light", tile.create_light_command(brightness=100))
     while tile.brightness != 100:
       time.sleep(1)
 
@@ -135,7 +157,7 @@ if __name__== "__main__":
   # Set all tiles to the same color (black)
   for tile in online_tiles:
     pixels = [Pixel() for i in range(len(tile.pixels))]
-    client.publish(BASE_TOPIC+"/"+tile.device_name+"/command/light", tile.create_light_command(pixels=pixels))
+    client.publish(BASE_TOPIC+"/"+tile.device_name+"/self/command/light", tile.create_light_command(pixels=pixels))
     while tile.pixels[0].red != 0 or tile.pixels[0].green != 0 or tile.pixels[0].blue != 0:
       time.sleep(1)
 
@@ -145,7 +167,7 @@ if __name__== "__main__":
   for tile in online_tiles:
     pixels = [Pixel() for i in range(len(tile.pixels))]
     pixels[0].red = 255
-    client.publish(BASE_TOPIC+"/"+tile.device_name+"/command/light", tile.create_light_command(pixels=pixels))
+    client.publish(BASE_TOPIC+"/"+tile.device_name+"/self/command/light", tile.create_light_command(pixels=pixels))
     while tile.pixels[0].red != 255:
       time.sleep(0.1)
 
@@ -157,7 +179,7 @@ if __name__== "__main__":
     print("Counter: " + str(counter))
     for tile in online_tiles:
       pixels = tile.pixels[-1:] + tile.pixels[:-1]
-      client.publish(BASE_TOPIC+"/"+tile.device_name+"/command/light", tile.create_light_command(pixels=pixels))
+      client.publish(BASE_TOPIC+"/"+tile.device_name+"/self/command/light", tile.create_light_command(pixels=pixels))
       while tile.pixels[counter].red != 255:
         time.sleep(0.0001)
 
