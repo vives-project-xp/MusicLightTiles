@@ -11,7 +11,7 @@ This document describes the way MQTT is used in this project.
 This project uses the following base topic:
 
 ```text
-music-light-tiles/
+PM/MLT/
 ```
 
 Each device has a unique name/id. This name is used as a subtopic.  
@@ -19,17 +19,37 @@ The name of the device should be it's mac address without the colons.
 For example, the device with the name `96DR72P425G4` will use the following topic:
 
 ```text
-music-light-tiles/96DR72P425G4/
+PM/MLT/96DR72P425G4/
 ```
 
-Each device has 2 main subtopics, `state` and `command`. 
+Each device has multiple subtopics. These subtopics are `self` and the once required by the project manager.
 
-### State
+### Self
+
+The `self` subtopic is used to by this project to communicate with the device.
+This subtopic has 2 subtopics, `state`, `command`.
+
+Example topic:
+```text
+PM/MLT/96DR72P425G4/self/
+```
+
+#### Last Will and Testament
+
+Each device has a publish a last will and testament message to the `self` subtopic.
+This message is used to notify the system when a device disconnects.
+
+#### State
 
 The `state` subtopic is used to publish the current state of the device.
 The state topic has 4 subtopics, `system`, `audio`, `light` and `presence`.
 
-#### System
+Example topic:
+```text
+PM/MLT/96DR72P425G4/state/
+```
+
+##### System
 
 The `system` subtopic is used to publish the system state of the device.
 This subtopic publishes its state as a JSON string and has the following subproperties:
@@ -106,7 +126,12 @@ Example json:
 }
 ```
 
-#### Audio
+Example topic:
+```text
+PM/MLT/96DR72P425G4/self/state/system/
+```
+
+##### Audio
 
 The `audio` subtopic is used to publish the audio state of the device.
 This subtopic publishes its state as a JSON string and has the following subproperties:
@@ -128,7 +153,12 @@ Example json:
 }
 ```
 
-#### Light
+Example topic:
+```text
+PM/MLT/96DR72P425G4/self/state/audio/
+```
+
+##### Light
 
 The `light` subtopic is used to publish the light state of the device.
 This subtopic publishes its state as a JSON string and has the following subproperties:
@@ -159,7 +189,12 @@ Example json:
 }
 ```
 
-#### Presence
+Example topic:
+```text
+PM/MLT/96DR72P425G4/self/state/light/
+```
+
+##### Presence
 
 The `Presence` subtopic is used to publish the detection state of the device.
 This subtopic publishes its state as a JSON string and has the following subproperties:
@@ -175,12 +210,22 @@ Example json:
 }
 ```
 
-### Command
+Example topic:
+```text
+PM/MLT/96DR72P425G4/self/state/presence/
+```
+
+#### Command
 
 The `command` subtopic is used to send commands to the device.
 The command topic has 3 subtopics, `system`, `audio` and `light`.
 
-#### System
+Example topic:
+```text
+PM/MLT/96DR72P425G4/self/command/
+```
+
+##### System
 
 The `system` subtopic is used to send system commands to the device.
 This subtopic expects a JSON string with the following subproperties:
@@ -198,7 +243,12 @@ Example json:
 }
 ```
 
-#### Audio
+Example topic:
+```text
+PM/MLT/96DR72P425G4/self/command/system/
+```
+
+##### Audio
 
 The `audio` subtopic is used to send audio commands to the device.
 This subtopic expects a JSON string with the following subproperties:
@@ -220,7 +270,12 @@ Example json:
 }
 ```
 
-#### Light
+Example topic:
+```text
+PM/MLT/96DR72P425G4/self/command/audio/
+```
+
+##### Light
 
 The `light` subtopic is used to send light commands to the device.
 This subtopic expects a JSON string with the following subproperties:
@@ -250,3 +305,24 @@ Example json:
   ]
 }
 ```
+
+Example topic:
+```text
+PM/MLT/96DR72P425G4/self/command/light/
+```
+
+#### Project Manager
+
+This project is managed by [Project Manager](https://github.com/vives-project-xp/ProjectMaster)
+
+Project Manager only sends commands to the devices, it does not receive any data from the devices.
+
+Project Manager uses the following topics:
+
+```text
+PM/MLT/96DR72P425G4/command/
+PM/MLT/96DR72P425G4/rgb/
+PM/MLT/96DR72P425G4/effect/
+```
+
+See the [Project Manager](https://github.com/vives-project-xp/ProjectMaster) documentation for more information.
