@@ -31,12 +31,6 @@ enum AudioAction {
   PAUSE_STOP = 24
 };
 
-// Define sound struct (sound file)
-struct Sound {
-  int id;
-  String name;
-};
-
 // Define pixel struct (led strip pixel)
 struct Pixel {
   int red;
@@ -61,59 +55,59 @@ const int uptimeInterval = 1000; // interval in milliseconds to update uptime
 const int amount_of_pixels = 12; // amount of pixels in the led strip
 const char* firmware_version = "0.0.6";
 const char* hardware_version = "0.0.2";
-const Sound sounds[] = {
-  Sound{1, "A cat meowing"},
-  Sound{2, "A dog barking"},
-  Sound{3, "A duck quacking"},
-  Sound{4, "A frog croaking"},
-  Sound{5, "A horse neighing"},
-  Sound{6, "A pig grunt"},
-  Sound{7, "A rooster crowing"},
-  Sound{8, "A chicken clucking"},
-  Sound{9, "A sheep baaing"},
-  Sound{10, "A wolf howling"},
-  Sound{11, "Minecraft villager"},
-  Sound{12, "Minecraft creeper hissing"},
-  Sound{13, "Minecraft explosion"},
-  Sound{14, "Mario jump"},
-  Sound{15, "Mario coin"},
-  Sound{16, "Mario death"},
-  Sound{17, "Among Us role reveal"},
-  Sound{18, "Fortnite death"},
-  Sound{19, "Roblox oof"},
-  Sound{20, "CS:GO bomb planted"},
-  Sound{21, "CS:GO bomb defused"},
-  Sound{22, "GTA San Andreas - Here we go again"},
-  Sound{23, "GTA V wasted"},
-  Sound{24, "GTA V phone ring"},
-  Sound{25, "Bruh sound effect"},
-  Sound{26, "Emotional damage"},
-  Sound{27, "Sad violin"},
-  Sound{28, "Windows XP error"},
-  Sound{29, "Windows XP shutdown"},
-  Sound{30, "Windows XP startup"},
-  Sound{31, "Piano C note"},
-  Sound{32, "Piano C# note"},
-  Sound{33, "Piano D note"},
-  Sound{34, "Piano D# note"},
-  Sound{35, "Piano E note"},
-  Sound{36, "Piano F note"},
-  Sound{37, "Piano F# note"},
-  Sound{38, "Piano G note"},
-  Sound{39, "Piano G# note"},
-  Sound{40, "Piano A note"},
-  Sound{41, "Piano A# note"},
-  Sound{42, "Piano B note"},
-  Sound{43, "Applause"},
-  Sound{44, "Kids cheering"},
-  Sound{45, "Crickets"},
-  Sound{46, "Wheel spin"},
-  Sound{47, "Wrong answer"},
-  Sound{48, "Right answer"},
-  Sound{49, "Intermission"},
-  Sound{50, "The Office - That's what she said"},
-  Sound{51, "The Office - No, God! No, God, please no! No! No! Nooooooo!"},
-  Sound{52, "Obi-Wan Kenobi - Hello there"}
+const String sounds[] = {
+  "A cat meowing",
+  "A dog barking",
+  "A duck quacking",
+  "A frog croaking",
+  "A horse neighing",
+  "A pig grunt",
+  "A rooster crowing",
+  "A chicken clucking",
+  "A sheep baaing",
+  "A wolf howling",
+  "Minecraft villager",
+  "Minecraft creeper hissing",
+  "Minecraft explosion",
+  "Mario jump",
+  "Mario coin",
+  "Mario death",
+  "Among Us role reveal",
+  "Fortnite death",
+  "Roblox oof",
+  "CS:GO bomb planted",
+  "CS:GO bomb defused",
+  "GTA San Andreas - Here we go again",
+  "GTA V wasted",
+  "GTA V phone ring",
+  "Bruh sound effect",
+  "Emotional damage",
+  "Sad violin",
+  "Windows XP error",
+  "Windows XP shutdown",
+  "Windows XP startup",
+  "Piano C note",
+  "Piano C# note",
+  "Piano D note",
+  "Piano D# note",
+  "Piano E note",
+  "Piano F note",
+  "Piano F# note",
+  "Piano G note",
+  "Piano G# note",
+  "Piano A note",
+  "Piano A# note",
+  "Piano B note",
+  "Applause",
+  "Kids cheering",
+  "Crickets",
+  "Wheel spin",
+  "Wrong answer",
+  "Right answer",
+  "Intermission",
+  "The Office - That's what she said",
+  "The Office - No, God! No, God, please no! No! No! Nooooooo!",
+  "Obi-Wan Kenobi - Hello there"
 }; // All sounds that can be played (available on the sd card of the dfplayer)
 const int amount_of_sounds = sizeof(sounds) / sizeof(sounds[0]);
 
@@ -144,7 +138,7 @@ int previous_audio_mode = 4;
 int audio_state = 0; // 0 = idle, 1 = playing, 2 = paused
 bool audio_loop = false;
 bool previous_audio_loop = false;
-String sound = sounds[0].name; // Take first sound in sounds array as default
+String sound = sounds[0]; // Take first sound in sounds array as default
 String previous_sound = sound;
 int volume = 0; // 0-30
 int previous_volume = 0;
@@ -536,7 +530,7 @@ String getSystemState() {
 
   JsonArray system_sounds = doc.createNestedArray("sounds");
   for (int i = 0; i < amount_of_sounds; i++) {
-    system_sounds.add(sounds[i].name);
+    system_sounds.add(sounds[i]);
   }
 
   String output;
@@ -578,8 +572,8 @@ bool updateAudio() {
         }
         // Play sound
         for (int i = 0; i < amount_of_sounds; i++) {
-          if (sound == sounds[i].name) {
-            dfplayer.play(sounds[i].id);
+          if (sound == sounds[i]) {
+            dfplayer.play(i + 1);
             break;
           }
         }
