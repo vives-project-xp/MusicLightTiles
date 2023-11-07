@@ -16,7 +16,7 @@ if __name__ == '__main__':
   # Create a list of processes and start them
   processes: list[multiprocessing.Process] = []
   for i in range(amount):
-    process = multiprocessing.Process(target=create_and_run_tile, args=(f"Tile{i}", stop_event))
+    process = multiprocessing.Process(target=create_and_run_tile, args=(f"TILE{i+1}", stop_event))
     processes.append(process)
     process.start()
 
