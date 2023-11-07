@@ -22,12 +22,12 @@ class AudioAction(Enum):
   PAUSE_STOP = 24
 
 class Tile:
-  # Constructor
   def __init__(self, device_name: str):
+    """Initializes the tile. (Constructor)"""
     self._reboot_tile(device_name)
 
-  # Methods
   def _connect_to_mqtt(self):
+    """Connects the tile to MQTT."""
     # Configure MQTT
     self._mqtt_client.on_connect = self._on_mqtt_connect
     self._mqtt_client.on_message = self._on_mqtt_message
@@ -38,6 +38,7 @@ class Tile:
     self._mqtt_client.connect(self._MQTT_HOST, self._MQTT_PORT, 60)
 
   def _on_mqtt_connect(self, client, userdata, flags, rc):
+    """Handles the MQTT connection."""
     # Publish online message
     self._mqtt_client.publish(f"{self._ROOT_TOPIC}/{self._device_name}/self", "ONLINE", 1, retain=True)
     # Publish initial state
@@ -49,6 +50,7 @@ class Tile:
     self._mqtt_client.subscribe(self._command_topic + "/#")
 
   def _on_mqtt_message(self, client, userdata, message):
+    """Handles, parses and processes incoming MQTT messages."""
     # Get topic
     topic: str = message.topic
     # Get payload
@@ -82,12 +84,16 @@ class Tile:
       pass
 
   def _disconnect_from_mqtt(self):
+    """Disconnects the tile from MQTT."""
     # Publish offline message
     self._mqtt_client.publish(f"{self._ROOT_TOPIC}/{self._device_name}/self", "OFFLINE", 1, retain=True)
     # Disconnect from MQTT
     self._mqtt_client.disconnect()
 
   def _update_system(self) -> bool:
+    """Updates the necessary system variables. 
+    
+    Returns true if the system state has changed."""
     if (self._ping):
       return self._update_uptime()
     elif (self._previous_ping != self._ping):
@@ -104,6 +110,9 @@ class Tile:
       return False
 
   def _update_uptime(self) -> bool:
+    """Updates the uptime.
+    
+    Returns true if the uptime has changed."""
     # Get current time
     current_time: int = time.time()
     # Check if uptime interval has passed
@@ -118,6 +127,7 @@ class Tile:
       return False
 
   def _get_system_state(self) -> str:
+    """Formats the system state to a JSON string and returns it."""
     # Create system state json
     system_state = {
       "firmware_version": self._FIRMWARE_VERSION,
@@ -132,6 +142,9 @@ class Tile:
     return system_state_string
 
   def _update_audio(self) -> bool:
+    """Updates the necessary audio variables.
+    
+    Returns true if the audio state has changed."""
     # Check if audio mode, sound, volume or loop have changed
     if (self._audio_mode != self._previous_audio_mode or self._audio_sound != self._previous_audio_sound or self._volume != self._previous_volume or self._audio_loop != self._previous_audio_loop):
       # Create audio action
@@ -186,6 +199,9 @@ class Tile:
       return False
     
   def _audio_player_state_changed(self) -> bool:
+    """Automatically stops the audio player after 10 seconds of playing to simulate the audio player stopping after the sound has finished playing.
+    
+    Returns true if the audio state has changed."""
     # State is playing, loop is false
     if self._audio_state == 1 and not self._audio_loop:
       # If 10 seconds have passed since playing started
@@ -208,6 +224,7 @@ class Tile:
       return False
 
   def _get_audio_state(self) -> str:
+    """Formats the audio state to a JSON string and returns it."""
     # Create audio state json
     audio_state = {
       "state": self._audio_state,
@@ -221,6 +238,9 @@ class Tile:
     return audio_state_string
 
   def _update_light(self) -> bool:
+    """Updates the necessary light variables.
+
+    Returns true if the light state has changed."""
     # Check if brightness or pixels changed
     if self._previous_brightness != self._brightness or self._previous_pixels != self._pixels:
       # Update previous brightness
@@ -234,6 +254,7 @@ class Tile:
       return False
 
   def _get_light_state(self) -> str:
+    """Formats the light state to a JSON string and returns it."""
     # Convert pixels to dicts
     pixels_dict: list[dict] = []
     for pixel in self._pixels:
@@ -249,6 +270,9 @@ class Tile:
     return light_state_string
 
   def _update_presence(self) -> bool:
+    """Checks if the presence has changed.
+
+    Returns true if the presence state has changed."""
     # Check if presence changed
     if self._previous_presence != self._presence:
       # Update previous presence
@@ -260,6 +284,7 @@ class Tile:
       return False
 
   def _get_presence_state(self) -> str:
+    """Formats the presence state to a JSON string and returns it."""
     # Create presence state json
     presence_state = {
       "detected": self._presence,
@@ -270,6 +295,7 @@ class Tile:
     return presence_state_string
 
   def run(self, stop_event: multiprocessing.Event) -> None:
+    """Runs the tile until the stop_event is set."""
     # Setup
     # Connect to MQTT
     self._connect_to_mqtt()
@@ -320,9 +346,15 @@ class Tile:
     self._disconnect_from_mqtt()
 
   def set_presence(self, presence: bool) -> None:
+    """Sets the presence of the tile. Because this is a simulation, this method is used to simulate the presence sensor.
+
+    Args:
+      presence (bool): The presence of the tile. (True = detected, False = not detected)
+    """
     self._presence = presence
 
   def _reboot_tile(self, device_name: str) -> None:
+    """Sets all variables to their default values, to simulate a reboot."""
     # Constants
     self._ROOT_TOPIC: str = "PM/MLT"
     self._UPTIME_INTERVAL: int = 1 # 1 second
