@@ -7,7 +7,6 @@ import os
 import time
 import json
 
-
 class AudioAction(Enum):
   IDLE_PLAY = 1,
   IDLE_PAUSE = 2,
@@ -32,7 +31,8 @@ class Tile:
     # Configure MQTT
     self._mqtt_client.on_connect = self._on_mqtt_connect
     self._mqtt_client.on_message = self._on_mqtt_message
-    self._mqtt_client.username_pw_set(self._MQTT_USER, self._MQTT_PASS)
+    if self._MQTT_USER != None and self._MQTT_PASS != None:
+      self._mqtt_client.username_pw_set(self._MQTT_USER, self._MQTT_PASS)
     self._mqtt_client.will_set(f"{self._ROOT_TOPIC}/{self._device_name}/self", "OFFLINE", 1, retain=True)
     # Connect to MQTT
     self._mqtt_client.connect(self._MQTT_HOST, self._MQTT_PORT, 60)
@@ -338,8 +338,8 @@ class Tile:
     dotenv.load_dotenv()
     self._MQTT_HOST: str = os.getenv("MQTT_HOST")
     self._MQTT_PORT: int = int(os.getenv("MQTT_PORT"))
-    self._MQTT_USER: str = os.getenv("MQTT_USER")
-    self._MQTT_PASS: str = os.getenv("MQTT_PASS")
+    self._MQTT_USER: str | None = os.getenv("MQTT_USER")
+    self._MQTT_PASS: str | None = os.getenv("MQTT_PASS")
     # Variables
     self._device_name: str = device_name
     self._reboot: bool = False

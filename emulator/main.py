@@ -1,24 +1,23 @@
 from tile import Tile
 import multiprocessing
 
+def create_and_run_tile(name: str, stop_event: multiprocessing.Event) -> None:
+  """Creates a tile and runs it until the stop_event is set."""
+  tile = Tile(name)
+  tile.run(stop_event)
+
 if __name__ == '__main__':
   # Request user input
   amount = int(input("How many tiles do you want to create? "))
 
-  # Create a list of tiles
-  tiles = [Tile(f"Tile{i+1}") for i in range(amount)]
-
   # Create a stop event to signal child processes to exit
   stop_event = multiprocessing.Event()
 
-  # Create a list of processes
+  # Create a list of processes and start them
   processes: list[multiprocessing.Process] = []
-  for tile in tiles:
-    process = multiprocessing.Process(target=tile.run)
+  for i in range(amount):
+    process = multiprocessing.Process(target=create_and_run_tile, args=(f"Tile{i}", stop_event))
     processes.append(process)
-
-  # Start all processes
-  for process in processes:
     process.start()
 
   # Wait for user input (Enter key) to stop the program
