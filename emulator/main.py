@@ -70,4 +70,3 @@ if __name__ == '__main__':
 
   # Print a message to indicate the program has stopped
   print("Program stopped")
-  

@@ -8,17 +8,17 @@ import time
 import json
 
 class AudioAction(Enum):
-  IDLE_PLAY = 1,
-  IDLE_PAUSE = 2,
-  IDLE_RESUME = 3,
-  IDLE_STOP = 4,
-  PLAY_PLAY = 11,
-  PLAY_PAUSE = 12,
-  PLAY_RESUME = 13,
-  PLAY_STOP = 14,
-  PAUSE_PLAY = 21,
-  PAUSE_PAUSE = 22,
-  PAUSE_RESUME = 23,
+  IDLE_PLAY = 1
+  IDLE_PAUSE = 2
+  IDLE_RESUME = 3
+  IDLE_STOP = 4
+  PLAY_PLAY = 11
+  PLAY_PAUSE = 12
+  PLAY_RESUME = 13
+  PLAY_STOP = 14
+  PAUSE_PLAY = 21
+  PAUSE_PAUSE = 22
+  PAUSE_RESUME = 23
   PAUSE_STOP = 24
 
 class Tile:
@@ -57,30 +57,34 @@ class Tile:
     payload: str = message.payload.decode("utf-8")
 
     # Parse payload for each topic
-    if topic == self._command_topic + "/system":
-      # Parse payload
-      system_command = json.loads(payload)
-      # Set variables
-      self._reboot = system_command["reboot"]
-      self._ping = system_command["ping"]
-    elif topic == self._command_topic + "/audio":
-      # Parse payload
-      audio_command = json.loads(payload)
-      # Set variables
-      self._audio_mode = audio_command["mode"]
-      self._audio_loop = audio_command["loop"]
-      self._audio_sound = audio_command["sound"]
-      self._volume = audio_command["volume"] / 100 * 30
-    elif topic == self._command_topic + "/light":
-      # Parse payload
-      light_command = json.loads(payload)
-      # Set variables
-      self._brightness = light_command["brightness"] / 100 * 255
-      # Set pixels
-      for i in range(0, self._AMOUNT_OF_PIXELS):
-        self._pixels[i].from_dict(light_command["pixels"][i])
-    else:
-      # Not a valid topic
+    try:
+      if topic == self._command_topic + "/system":
+        # Parse payload
+        system_command = json.loads(payload)
+        # Set variables
+        self._reboot = system_command["reboot"]
+        self._ping = system_command["ping"]
+      elif topic == self._command_topic + "/audio":
+        # Parse payload
+        audio_command = json.loads(payload)
+        # Set variables
+        self._audio_mode = audio_command["mode"]
+        self._audio_loop = audio_command["loop"]
+        self._audio_sound = audio_command["sound"]
+        self._volume = int((audio_command["volume"] / 100) * 30)
+      elif topic == self._command_topic + "/light":
+        # Parse payload
+        light_command = json.loads(payload)
+        # Set variables
+        self._brightness = light_command["brightness"] / 100 * 255
+        # Set pixels
+        for i in range(0, self._AMOUNT_OF_PIXELS):
+          self._pixels[i].from_dict(light_command["pixels"][i])
+      else:
+        # Not a valid topic
+        pass
+    except:
+      # Invalid payload
       pass
 
   def _disconnect_from_mqtt(self):
@@ -148,7 +152,7 @@ class Tile:
     # Check if audio mode, sound, volume or loop have changed
     if (self._audio_mode != self._previous_audio_mode or self._audio_sound != self._previous_audio_sound or self._volume != self._previous_volume or self._audio_loop != self._previous_audio_loop):
       # Create audio action
-      audio_action: AudioAction = AudioAction(self._previous_audio_mode * 10 + self._audio_mode)
+      audio_action: AudioAction = AudioAction(self._audio_state * 10 + self._audio_mode)
       # Case audio action
       match audio_action:
         case AudioAction.IDLE_PLAY | AudioAction.PLAY_PLAY | AudioAction.PAUSE_PLAY:
