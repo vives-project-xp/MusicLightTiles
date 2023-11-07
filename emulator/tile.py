@@ -410,8 +410,8 @@ class Tile:
     self._previous_volume: int = self._volume
     self._brightness: int = 0 # 0 - 255
     self._previous_brightness: int = self._brightness
-    self._pixels: list[Pixel] = []
-    self._previous_pixels: list[Pixel] = []
+    self._pixels: list[Pixel] = [Pixel(0, 0, 0, 0) for i in range(0, self._AMOUNT_OF_PIXELS)]
+    self._previous_pixels: list[Pixel] = self._pixels
     # MQTT
     self._state_topic: str = f"{self._ROOT_TOPIC}/{self._device_name}/self/state"
     self._command_topic: str = f"{self._ROOT_TOPIC}/{self._device_name}/self/command"
