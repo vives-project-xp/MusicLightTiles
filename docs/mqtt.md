@@ -22,7 +22,7 @@ For example, the device with the name `96DR72P425G4` will use the following topi
 PM/MLT/96DR72P425G4/
 ```
 
-Each device has multiple subtopics. These subtopics are `self` and the once required by the project manager.
+Each device has multiple subtopics. These subtopics are `self` and the once required by [Project Master](#project-master).
 
 ### Self
 
@@ -311,13 +311,13 @@ Example topic:
 PM/MLT/96DR72P425G4/self/command/light/
 ```
 
-#### Project Manager
+#### Project Master
 
-This project is managed by [Project Manager](https://github.com/vives-project-xp/ProjectMaster)
+This project is managed by [Project Master](https://github.com/vives-project-xp/ProjectMaster)
 
-Project Manager only sends commands to the devices, it does not receive any data from the devices.
+Project Master only sends commands to the devices, it does not receive any data from the devices.
 
-Project Manager uses the following topics:
+Project Master uses the following topics:
 
 ```text
 PM/MLT/96DR72P425G4/command/
@@ -325,4 +325,4 @@ PM/MLT/96DR72P425G4/rgb/
 PM/MLT/96DR72P425G4/effect/
 ```
 
-See the [Project Manager](https://github.com/vives-project-xp/ProjectMaster) documentation for more information.
+See the [Project Master](https://github.com/vives-project-xp/ProjectMaster) documentation for more information.
