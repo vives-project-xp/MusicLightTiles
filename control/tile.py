@@ -10,7 +10,7 @@ class CmdType(Enum):
 class Tile:
   # Constructor
   def __init__(self, device_name: str):
-    print("Tile created: " + device_name)
+    print("Tile " + device_name + " created")
     self.device_name: str = device_name
     self._online: bool = False
     self._firmware_version: str = ""
