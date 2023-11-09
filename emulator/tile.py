@@ -134,11 +134,11 @@ class Tile:
     """Formats the system state to a JSON string and returns it."""
     # Create system state json
     system_state = {
-      "firmware_version": self._FIRMWARE_VERSION,
-      "hardware_version": self._HARDWARE_VERSION,
+      "firmware": self._FIRMWARE_VERSION,
+      "hardware": self._HARDWARE_VERSION,
       "ping": self._ping,
       "uptime": self._uptime,
-      "sound": self._SOUNDS,
+      "sounds": self._SOUNDS,
     }
     # Convert system state json to string
     system_state_string: str = json.dumps(system_state)
