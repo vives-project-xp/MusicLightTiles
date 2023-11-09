@@ -134,6 +134,11 @@ def message_handler(tile: Tile, topic: str, payload: str) -> None:
 
 def send_command(client: mqtt.Client, tile: Tile, type: CmdType, command: str) -> None:
   """Sends a command to the tile."""
+  # Prevent sending commands to offline tiles
+  if tile.online == False:
+    print("Tile " + tile.device_name + " is offline, can't send command")
+    return
+
   # Send command to tile
   if type == CmdType.SYSTEM:
     client.publish(BASE_TOPIC+"/"+tile.device_name+"/self/command/system", command)
