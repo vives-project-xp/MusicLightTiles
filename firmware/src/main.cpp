@@ -484,15 +484,15 @@ void disconnectFromMqtt() {
 
 // Update system function
 bool updateSystem() {
-  if (ping) {
-    return updateUptime();
-  } else if (previous_ping != ping) {
+  if (ping != previous_ping) {
     // Ping has changed
     updateUptime();
     // Update previous ping
     previous_ping = ping;
     // State has changed, return true
     return true;
+  } else if (ping) {
+    return updateUptime();
   } else {
     updateUptime();
     // State hasn't changed, return false
