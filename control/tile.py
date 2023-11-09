@@ -1,5 +1,11 @@
 from pixel import Pixel
+from enum import Enum
 import json
+
+class CmdType(Enum):
+  SYSTEM = 0
+  AUDIO = 1
+  LIGHT = 2
 
 class Tile:
   # Constructor
