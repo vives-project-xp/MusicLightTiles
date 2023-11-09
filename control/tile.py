@@ -81,60 +81,72 @@ class Tile:
   # Methods
   def update_system_state(self, state: str) -> None:
     """Set the system state of the tile from a JSON string"""
-
-    print("Tile " + self.device_name + " system state updated")
-    # Convert JSON string to JSON object
-    state_json: dict = json.loads(state)
-
-    # System
-    self._firmware_version = state_json["firmware"]
-    self._hardware_version = state_json["hardware"]
-    self._pinging = state_json["ping"]
-    self._uptime = state_json["uptime"]
-    self._sounds = state_json["sounds"]
+    try:
+      # Convert JSON string to JSON object
+      state_json: dict = json.loads(state)
+      # System
+      self._firmware_version = str(state_json["firmware"])
+      self._hardware_version = str(state_json["hardware"])
+      self._pinging = bool(state_json["ping"])
+      self._uptime = int(state_json["uptime"])
+      self._sounds = list(map(int, state_json["sounds"]))
+    except:
+      # Invalid JSON string (missing keys, wrong types, etc.)
+      pass
+    else:
+      print("Tile " + self.device_name + " system state updated")
 
   def update_audio_state(self, state: str) -> None:
     """Set the audio state of the tile from a JSON string"""
-
-    print("Tile " + self.device_name + " audio state updated")
-    # Convert JSON string to JSON object
-    state_json: dict = json.loads(state)
-
-    # Audio
-    self._audio_state = state_json["state"]
-    self._audio_looping = state_json["looping"]
-    self._audio_sound = state_json["sound"]
-    self._audio_volume = state_json["volume"]
+    try:
+      # Convert JSON string to JSON object
+      state_json: dict = json.loads(state)
+      # Audio
+      self._audio_state = int(state_json["state"])
+      self._audio_looping = bool(state_json["looping"])
+      self._audio_sound = str(state_json["sound"])
+      self._audio_volume = int(state_json["volume"])
+    except:
+      # Invalid JSON string (missing keys, wrong types, etc.)
+      pass
+    else:
+      print("Tile " + self.device_name + " audio state updated")
 
   def update_light_state(self, state: str) -> None:
     """Set the light state of the tile from a JSON string"""
-
-    print("Tile " + self.device_name + " light state updated")
-    # Convert JSON string to JSON object
-    state_json: dict = json.loads(state)
-
-    # Light
-    self._brightness = state_json["brightness"]
-    pixels = state_json["pixels"]
-    for i in range(len(pixels)):
-      # Add new pixels if needed
-      if i >= len(self._pixels):
-        self._pixels.append(Pixel())
-      # Update pixel
-      self._pixels[i].from_dict(pixels[i])
-    # Remove extra unused pixels
-    if len(self._pixels) > len(pixels):
-      self._pixels = self._pixels[:len(pixels)]
+    try:
+      # Convert JSON string to JSON object
+      state_json: dict = json.loads(state)
+      # Light
+      self._brightness = int(state_json["brightness"])
+      pixels = list(map(dict, state_json["pixels"]))
+      for i in range(len(pixels)):
+        # Add new pixels if needed
+        if i >= len(self._pixels):
+          self._pixels.append(Pixel())
+        # Update pixel
+        self._pixels[i].from_dict(pixels[i])
+      # Remove extra unused pixels
+      if len(self._pixels) > len(pixels):
+        self._pixels = self._pixels[:len(pixels)]
+    except:
+      # Invalid JSON string (missing keys, wrong types, etc.)
+      pass
+    else:
+      print("Tile " + self.device_name + " light state updated")
 
   def update_presence_state(self, state: str) -> None:
     """Set the presence state of the tile from a JSON string"""
-
-    print("Tile " + self.device_name + " presence state updated")
-    # Convert JSON string to JSON object
-    state_json: dict = json.loads(state)
-
-    # Detection
-    self._detected = state_json["detected"]
+    try:
+      # Convert JSON string to JSON object
+      state_json: dict = json.loads(state)
+      # Detection
+      self._detected = bool(state_json["detected"])
+    except:
+      # Invalid JSON string (missing keys, wrong types, etc.)
+      pass
+    else:
+      print("Tile " + self.device_name + " presence state updated")
   
   def create_system_command(self, reboot: bool = False, ping: bool = None):
     """Create a command to send to the tile to change the system state"""
