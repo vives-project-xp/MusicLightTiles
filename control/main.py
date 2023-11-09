@@ -1,25 +1,26 @@
 import paho.mqtt.client as mqtt
-from tile import Tile
+from tile import Tile, CmdType
 from pixel import Pixel
 import os
 import time
 #import asyncio
 #import websockets
 from dotenv import load_dotenv
+import threading
 
 load_dotenv()
 
 # Constants
 HOST: str = os.getenv("MQTT_SERVER")
 PORT: int = int(os.getenv("MQTT_PORT"))
-MQTT_USER = os.getenv("MQTT_USERNAME")
-MQTT_PASS = os.getenv("MQTT_PASSWORD")
+#MQTT_USER = os.getenv("MQTT_USERNAME")
+#MQTT_PASS = os.getenv("MQTT_PASSWORD")
 BASE_TOPIC = "PM/MLT"
 
 # Variables
 tiles: list[Tile] = []
 
-def on_connect(client, userdata, flags, rc):
+def on_connect(client: mqtt.Client, userdata, flags, rc) -> None:
   """The callback for when the client receives a CONNACK response from the server."""
 
   print("Connected with result code "+str(rc))
@@ -27,37 +28,66 @@ def on_connect(client, userdata, flags, rc):
   # Subscribing in on_connect() means that if we lose the connection and
   # reconnect then subscriptions will be renewed.
 
-  # Subscribe to all devices (only the device name, not the state)
-  client.subscribe(BASE_TOPIC+"/+")
+  # Subscribe to all the tiles (self topic)
+  print("Subscribing to all devices")
+  client.subscribe(BASE_TOPIC+"/+/self")
 
-def on_message(client, userdata, msg):
+def on_message(client, userdata, msg) -> None:
   """The callback for when a PUBLISH message is received from the server."""
   #convert topic and payload to string
   topic = msg.topic
-  payload = msg.payload.decode("utf-8")
+  payload = msg.payload.decode("utf-8") 
 
-  #print("Recieved message on topic: " + topic)
- 
+  # Split the topic into parts (for easier processing)
   topic_parts = topic.split("/")
-  tile: Tile = None
 
   # Check if tile with name exists
-  tile_name = topic_parts[1]
-  for t in tiles:
-    if t.device_name == tile_name:
-      tile = t
-      break
-  # Tile doesn't exist yet, create it
+  tile: Tile = None
+  tile_name = topic_parts[2]
+  tile = get_existing_tile(tile_name)
+  # If tile is None, add it to the list of tiles
   if tile == None:
-    tile = Tile(tile_name)
-    tiles.append(tile)
-    # Subscribe to the tile's state subtopics
-    client.subscribe(BASE_TOPIC+"/"+tile_name+"/self/state/+")
-    # Subscribe to the project master's command subtopics
-    client.subscribe(BASE_TOPIC+"/"+tile_name+"/command")
-    client.subscribe(BASE_TOPIC+"/"+tile_name+"/rgb")
-    client.subscribe(BASE_TOPIC+"/"+tile_name+"/effect")
+    tile = add_new_tile(client, tile_name)
 
+  # Handle the message
+  message_handler(tile, topic, payload)
+
+def add_new_tile(client: mqtt.Client, tile_name: str) -> Tile:
+  """Adds a new tile to the list of tiles."""
+  print("Creating new tile: " + tile_name)
+  # Check if tile with name exists
+  for tile in tiles:
+    if tile.device_name == tile_name:
+      return
+  # Tile doesn't exist yet, create it
+  tile = Tile(tile_name)
+  tiles.append(tile)
+  # Subscribe to the tile's state subtopics
+  client.subscribe(BASE_TOPIC+"/"+tile_name+"/self/state/+")
+  # Subscribe to the project master's command subtopics
+  client.subscribe(BASE_TOPIC+"/"+tile_name+"/command")
+  client.subscribe(BASE_TOPIC+"/"+tile_name+"/rgb")
+  client.subscribe(BASE_TOPIC+"/"+tile_name+"/effect")
+  # Set ping state of tile to False (to show that it's connected) 
+  # schedule command for later (after 5 seconds, because the tile might not be fully initialized yet)
+  threading.Timer(5.0, send_command, [client, tile, CmdType.SYSTEM, tile.create_system_command(False, False)]).start()
+  # Return the tile (for further processing)
+  return tile
+
+def get_existing_tile(tile_name: str) -> Tile:
+  """Returns the tile with the given name, or None if it doesn't exist."""
+  for tile in tiles:
+    if tile.device_name == tile_name:
+      return tile
+  return None
+
+def message_handler(tile: Tile, topic: str, payload: str) -> None:
+  """Handles messages from the tile."""
+  print("Processing message from tile " + tile.device_name)
+  # Split the topic into parts (for easier processing)
+  topic_parts = topic.split("/")
+
+  """Handles messages from the tile."""
   # Check if topic ends with self
   if topic_parts[-1] == "self":
     # Check if payload is online or offline
@@ -102,15 +132,23 @@ def on_message(client, userdata, msg):
     # TODO: Process effect
     return
 
+def send_command(client: mqtt.Client, tile: Tile, type: CmdType, command: str) -> None:
+  """Sends a command to the tile."""
+  # Send command to tile
+  if type == CmdType.SYSTEM:
+    client.publish(BASE_TOPIC+"/"+tile.device_name+"/self/command/system", command)
+  elif type == CmdType.AUDIO:
+    client.publish(BASE_TOPIC+"/"+tile.device_name+"/self/command/audio", command)
+  elif type == CmdType.LIGHT:
+    client.publish(BASE_TOPIC+"/"+tile.device_name+"/self/command/light", command)
 
 # Main
 if __name__== "__main__":
-  # Setup MQTT client
-  # Create client of type mqtt.Client with client_id="CONTROLLER" and clean_session=True
+  # Configure MQTT client
   client = mqtt.Client(client_id="CONTROLLER", clean_session=True)
   client.on_connect = on_connect
   client.on_message = on_message
-  client.username_pw_set(MQTT_USER, MQTT_PASS)
+  #client.username_pw_set(MQTT_USER, MQTT_PASS)
 
   # Connect to MQTT server
   client.connect(HOST, PORT, 60)
@@ -118,73 +156,6 @@ if __name__== "__main__":
   # Keep the client connected (start a new thread)
   client.loop_start()
 
-  # Wait until a tile is online
-  while len(tiles) == 0:
-    time.sleep(1)
-
-  tiles_online = False
-  while not tiles_online:
-    for tile in tiles:
-      if tile.online:
-        tiles_online = True
-        break
-    time.sleep(1)
-
-  print("Found online tiles")
-  
-  # Make list of online tiles
-  online_tiles = []
-  for tile in tiles:
-    if tile.online:
-      online_tiles.append(tile)
-
-  # Set ping of all tiles to off
-  for tile in online_tiles:
-    client.publish(BASE_TOPIC+"/"+tile.device_name+"/self/command/system", tile.create_system_command(ping=False))
-    while tile.pinging:
-      time.sleep(1)
-
-  print("All tiles have ping set to off")
-    
-  # Set all tiles to the same brightness
-  for tile in online_tiles:
-    client.publish(BASE_TOPIC+"/"+tile.device_name+"/self/command/light", tile.create_light_command(brightness=100))
-    while tile.brightness != 100:
-      time.sleep(1)
-
-  print("All tiles have the same brightness")
-  
-  # Set all tiles to the same color (black)
-  for tile in online_tiles:
-    pixels = [Pixel() for i in range(len(tile.pixels))]
-    client.publish(BASE_TOPIC+"/"+tile.device_name+"/self/command/light", tile.create_light_command(pixels=pixels))
-    while tile.pixels[0].red != 0 or tile.pixels[0].green != 0 or tile.pixels[0].blue != 0:
-      time.sleep(1)
-
-  print("All tiles have been set to black")
-
-  # Set first pixel of all tiles to red
-  for tile in online_tiles:
-    pixels = [Pixel() for i in range(len(tile.pixels))]
-    pixels[0].red = 255
-    client.publish(BASE_TOPIC+"/"+tile.device_name+"/self/command/light", tile.create_light_command(pixels=pixels))
-    while tile.pixels[0].red != 255:
-      time.sleep(0.1)
-
-  print("All first pixels have been set to red")
-  
-  # Shift pixels of all tiles by 1 loop forever
-  counter = 0
+  # Keep the program running (TODO: replace thiw with a proper alternative)
   while True:
-    print("Counter: " + str(counter))
-    for tile in online_tiles:
-      pixels = tile.pixels[-1:] + tile.pixels[:-1]
-      client.publish(BASE_TOPIC+"/"+tile.device_name+"/self/command/light", tile.create_light_command(pixels=pixels))
-      while tile.pixels[counter].red != 255:
-        time.sleep(0.0001)
-
-    if counter == len(online_tiles[0].pixels) - 1:
-      counter = 0
-    else:
-      counter += 1
-    time.sleep(0.001)
+    time.sleep(1)
