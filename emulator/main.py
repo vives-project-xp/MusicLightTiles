@@ -40,7 +40,7 @@ def create_and_run_tile(name: str, stop_event: multiprocessing.Event, random_pre
 
 if __name__ == '__main__':
   # Request user input
-  amount = int(input("How many tiles do you want to simulate? "))
+  amount = int(input("How many tiles do you want to simulate?\n"))
 
   # Create a stop event to signal child processes to exit
   stop_event = multiprocessing.Event()
@@ -55,7 +55,7 @@ if __name__ == '__main__':
   # Wait for user input (Enter key) to stop the program
   try:
     # Wait for user input (Enter key)
-    input("Press enter to stop the program")
+    input("Press enter to stop the program\n")
   except KeyboardInterrupt:
     # Handle Ctrl+C gracefully
     pass

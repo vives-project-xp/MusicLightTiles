@@ -62,24 +62,24 @@ class Tile:
         # Parse payload
         system_command = json.loads(payload)
         # Set variables
-        self._reboot = system_command["reboot"]
-        self._ping = system_command["ping"]
+        self._reboot = bool(system_command["reboot"])
+        self._ping = bool(system_command["ping"])
       elif topic == self._command_topic + "/audio":
         # Parse payload
         audio_command = json.loads(payload)
         # Set variables
-        self._audio_mode = audio_command["mode"]
-        self._audio_loop = audio_command["loop"]
-        self._audio_sound = audio_command["sound"]
+        self._audio_mode = int(audio_command["mode"])
+        self._audio_loop = bool(audio_command["loop"])
+        self._audio_sound = str(audio_command["sound"])
         self._volume = int((audio_command["volume"] / 100) * 30)
       elif topic == self._command_topic + "/light":
         # Parse payload
         light_command = json.loads(payload)
         # Set variables
-        self._brightness = light_command["brightness"] / 100 * 255
+        self._brightness = int(light_command["brightness"] / 100 * 255)
         # Set pixels
         for i in range(0, self._AMOUNT_OF_PIXELS):
-          self._pixels[i].from_dict(light_command["pixels"][i])
+          self._pixels[i].from_dict(dict(light_command["pixels"][i]))
       else:
         # Not a valid topic
         pass
