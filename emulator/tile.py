@@ -98,15 +98,15 @@ class Tile:
     """Updates the necessary system variables. 
     
     Returns true if the system state has changed."""
-    if (self._ping):
-      return self._update_uptime()
-    elif (self._previous_ping != self._ping):
+    if (self._ping != self._previous_ping):
       # Ping changed
       self._update_uptime()
       # Update previous ping
       self._previous_ping = self._ping
       # Return true
       return True
+    elif (self._ping):
+      return self._update_uptime()
     else:
       # Update uptime
       self._update_uptime()
