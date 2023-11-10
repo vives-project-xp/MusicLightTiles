@@ -60,7 +60,7 @@ This subtopic publishes its state as a JSON string and has the following subprop
 | `hardware` | String | The hardware version of the device. |
 | `ping` | Boolean | Whether the device is pinging or not. |
 | `uptime` | Number | The number of seconds the device has been running. |
-| `sounds` | Array | The list od possible sounds the device can play. |
+| `sounds` | Array | The list of possible sounds the device can play. |
 
 Example json:
 ```json
