@@ -234,6 +234,7 @@ There are 2 actions the server can perform:
 This action is used to send a list of all tiles connected to the control server.
 When the client connects to the control server, the control server will send a list of all available tiles. (This also includes tiles that are offline)
 After the client has received this list, the control server will only send updates when a tile is added or removed.
+This action is sent as a response to a [subscribe](#subscribe) action with the `type` set to `tiles`.
 
 __The `tiles` action has the following properties:__
 
@@ -273,19 +274,18 @@ __Example of a `tiles` action when a tile is removed:__
 }
 ```
 
-This action is sent as a response to a [subscribe](#subscribe) action with the `type` set to `tiles`.
-
-### Tile
+### State
 
 This action is used to send updates about the state of the tiles.
 The control server will send these updates when a tile changes its state.
 There are multiple types of updates, but they all have the same base.
+This action is sent as a response to a [subscribe](#subscribe) action with the `type` set to `state`.
 
 __The tile state is sent as a JSON object with the following properties:__
 
 | Property | Type | Description |
 | -------- | ---- | ----------- |
-| `action` | String | The action to perform. In this case, `tile`. |
+| `action` | String | The action to perform. In this case, `state`. |
 | `type` | String | The type of update. Can be `system`, `audio`, `light`, `presence` or `full` |
 | `tile` | String | The name of the tile. |
 | `args` | Object | The arguments for the update. Each update type has its own arguments. |
@@ -294,7 +294,7 @@ __Example of a base state update:__
 
 ```json
 {
-  "action": "tile",
+  "action": "state",
   "type": "full",
   "tile": "tile-1",
   "args": {}
@@ -320,7 +320,7 @@ __Example of a `system` state update:__
 
 ```json
 {
-  "action": "tile",
+  "action": "state",
   "type": "system",
   "tile": "tile-1",
   "args": {
@@ -351,7 +351,7 @@ __Example of an `audio` state update:__
 
 ```json
 {
-  "action": "tile",
+  "action": "state",
   "type": "audio",
   "tile": "tile-1",
   "args": {
@@ -379,7 +379,7 @@ __Example of a `light` state update:__
 
 ```json
 {
-  "action": "tile",
+  "action": "state",
   "type": "light",
   "tile": "tile-1",
   "args": {
@@ -420,7 +420,7 @@ __Example of a `full` state update:__
 
 ```json
 {
-  "action": "tile",
+  "action": "state",
   "type": "full",
   "tile": "tile-1",
   "args": {
