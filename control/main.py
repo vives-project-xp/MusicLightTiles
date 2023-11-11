@@ -21,6 +21,8 @@ BASE_TOPIC = "PM/MLT"
 # Variables
 tiles: list[Tile] = []
 
+tile_channels = {}
+
 def on_connect(client: mqtt.Client, userdata, flags, rc) -> None:
   """The callback for when the client receives a CONNACK response from the server."""
 
@@ -72,6 +74,8 @@ def add_new_tile(client: mqtt.Client, tile_name: str) -> Tile:
   # Set ping state of tile to False (to show that it's connected) 
   # schedule command for later (after 5 seconds, because the tile might not be fully initialized yet)
   threading.Timer(5.0, send_command, [client, tile, CmdType.SYSTEM, tile.create_system_command(False, False)]).start()
+  # Add a list for the tile's channels
+  tile_channels[tile_name] = []
   # Return the tile (for further processing)
   return tile
 
@@ -96,6 +100,9 @@ def message_handler(tile: Tile, topic: str, payload: str) -> None:
       tile.online = True
     elif payload == "OFFLINE":
       tile.online = False
+    # send online update to all ws clients
+    for ws in tile_channels[tile.device_name]:
+      asyncio.run(ws_send_online(ws, tile))
     return
   
   # Check if topic comes from self
@@ -103,23 +110,35 @@ def message_handler(tile: Tile, topic: str, payload: str) -> None:
     # Check if topic ends with "system"
     if topic_parts[-1] == "system":
       tile.update_system_state(payload)
+      # send system update to all ws clients
+      for ws in tile_channels[tile.device_name]:
+        asyncio.run(ws_send_system(ws, tile))
       return
 
     # Check if topic ends with "audio"
     if topic_parts[-1] == "audio":
       tile.update_audio_state(payload)
+      # send audio update to all ws clients
+      for ws in tile_channels[tile.device_name]:
+        asyncio.run(ws_send_audio(ws, tile))
       return
 
     # Check if topic ends with "light"
     if topic_parts[-1] == "light":
       tile.update_light_state(payload)
+      # send light update to all ws clients
+      for ws in tile_channels[tile.device_name]:
+        asyncio.run(ws_send_light(ws, tile))
       return
 
     # Check if topic ends with "presence"
     if topic_parts[-1] == "presence":
       tile.update_presence_state(payload)
+      # send presence update to all ws clients
+      for ws in tile_channels[tile.device_name]:
+        asyncio.run(ws_send_presence(ws, tile))
       return
-    
+
   # Check if topic comes from project master
   if topic_parts[-1] == "command":
     # TODO: Process command
@@ -164,7 +183,7 @@ async def on_ws_message(websocket):
     if action == "subscribe":
       await ws_subscribe(websocket, message_json)
     elif action == "unsubscribe":
-      await ws_unsubscribe(message_json)
+      await ws_unsubscribe(websocket, message_json)
     elif action == "command":
       await ws_command(message_json)
     else:
@@ -198,41 +217,13 @@ async def ws_subscribe(websocket, message_json: dict) -> None:
         # Tile doesn't exist, do nothing
         print("Tile " + tile + " doesn't exist")
         continue
-      # return full state of tile
-      responds = {
-        "action": "state",
-        "type": "full",
-        "tile": t.device_name,
-        "args": {
-          "online": t.online,
-          "system": {
-            "firmware": t.firmware_version,
-            "hardware": t.hardware_version,
-            "ping": t.pinging,
-            "uptime": t.uptime,
-            "sounds": t.sounds
-          },
-          "audio": {
-            "state": t.audio_state,
-            "looping": t.audio_looping,
-            "sound": t.audio_sound,
-            "volume": t.audio_volume
-          },
-          "light": {
-            "brightness": t.brightness,
-            "pixels": [pixel.to_dict() for pixel in t.pixels]
-          },
-          "presence": {
-            "detected": t.detected
-          }
-        }
-      }
-      # Send state to the client
-      await websocket.send(json.dumps(responds, indent=4))
-      # TODO: subscribe to changes in tile state
+      # Send full state of tile to client
+      await ws_send_full(websocket, t)
+      # Add websocket to list of channels for the tile
+      tile_channels[tile].append(websocket)
     print("Subscribed to state of tiles: " + str(subscribe_tiles))
 
-async def ws_unsubscribe(message_json: dict) -> None:
+async def ws_unsubscribe(websocket, message_json: dict) -> None:
   type = str(message_json["type"])
 
   if type == "tiles":
@@ -241,8 +232,8 @@ async def ws_unsubscribe(message_json: dict) -> None:
   elif type == "state":
     unsubscribe_tiles = str(message_json["tiles"])
     for tile in unsubscribe_tiles:
-      # TODO: unsubscribe from changes in tile state
-      pass
+      # remove websocket from list of channels for the tile
+      tile_channels[tile].remove(websocket)
     print("Unsubscribed from state of tiles: " + str(unsubscribe_tiles))
 
 async def ws_command(message_json: dict) -> None:
@@ -301,6 +292,118 @@ async def ws_command(message_json: dict) -> None:
   else:
     # Unknown command type, do nothing
     print("Unknown command type: " + type)
+
+async def ws_send_online(websocket, tile: Tile) -> None:
+  # Create formatted list of tiles (json)
+  responds = {
+    "action": "state",
+    "type": "online",
+    "tile": tile.device_name,
+    "args": {
+      "online": tile.online
+    }
+  }
+
+  # Send list of tiles to client
+  await websocket.send(json.dumps(responds, indent=4))
+
+async def ws_send_system(websocket, tile: Tile) -> None:
+  # Create formatted list of tiles (json)
+  responds = {
+    "action": "state",
+    "type": "system",
+    "tile": tile.device_name,
+    "args": {
+      "firmware": tile.firmware_version,
+      "hardware": tile.hardware_version,
+      "ping": tile.pinging,
+      "uptime": tile.uptime,
+      "sounds": tile.sounds
+    }
+  }
+
+  # Send list of tiles to client
+  await websocket.send(json.dumps(responds, indent=4))
+
+async def ws_send_audio(websocket, tile: Tile) -> None:
+  # Create formatted list of tiles (json)
+  responds = {
+    "action": "state",
+    "type": "audio",
+    "tile": tile.device_name,
+    "args": {
+      "state": tile.audio_state,
+      "looping": tile.audio_looping,
+      "sound": tile.audio_sound,
+      "volume": tile.audio_volume
+    }
+  }
+
+  # Send list of tiles to client
+  await websocket.send(json.dumps(responds, indent=4))
+
+async def ws_send_light(websocket, tile: Tile) -> None:
+  # Create formatted list of tiles (json)
+  responds = {
+    "action": "state",
+    "type": "light",
+    "tile": tile.device_name,
+    "args": {
+      "brightness": tile.brightness,
+      "pixels": [pixel.to_dict() for pixel in tile.pixels]
+    }
+  }
+
+  # Send list of tiles to client
+  await websocket.send(json.dumps(responds, indent=4))
+
+async def ws_send_presence(websocket, tile: Tile) -> None:
+  # Create formatted list of tiles (json)
+  responds = {
+    "action": "state",
+    "type": "presence",
+    "tile": tile.device_name,
+    "args": {
+      "detected": tile.detected
+    }
+  }
+
+  # Send list of tiles to client
+  await websocket.send(json.dumps(responds, indent=4))
+
+async def ws_send_full(websocket, tile: Tile) -> None:
+  # Create formatted list of tiles (json)
+  responds = {
+    "action": "state",
+    "type": "full",
+    "tile": tile.device_name,
+    "args": {
+      "online": tile.online,
+      "system": {
+        "firmware": tile.firmware_version,
+        "hardware": tile.hardware_version,
+        "ping": tile.pinging,
+        "uptime": tile.uptime,
+        "sounds": tile.sounds
+      },
+      "audio": {
+        "state": tile.audio_state,
+        "looping": tile.audio_looping,
+        "sound": tile.audio_sound,
+        "volume": tile.audio_volume
+      },
+      "light": {
+        "brightness": tile.brightness,
+        "pixels": [pixel.to_dict() for pixel in tile.pixels]
+      },
+      "presence": {
+        "detected": tile.detected
+      }
+    }
+  }
+
+  # Send list of tiles to client
+  await websocket.send(json.dumps(responds, indent=4))
 
 # Main
 if __name__== "__main__":
