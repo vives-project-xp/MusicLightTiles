@@ -52,7 +52,7 @@ __Example of a `subscribe` action for the list of tiles:__
 }
 ```
 
-Responds for this action can be found [here](#send-list-of-tiles).
+Responds for this action can be found [here](#tiles).
 
 __Example of a `subscribe` action for the state of tiles:__
 
@@ -64,7 +64,7 @@ __Example of a `subscribe` action for the state of tiles:__
 }
 ```
 
-Responds for this action can be found [here](#send-state-updates-to-client).
+Responds for this action can be found [here](#state).
 
 ### Unsubscribe
 
@@ -459,10 +459,10 @@ __The `state` object for the `full` update type has the following properties:__
 
 | Property | Type | Description |
 | -------- | ---- | ----------- |
-| `system` | Object | The system state of the device. can be found [here](#system). |
-| `audio` | Object | The audio state of the device. can be found [here](#audio). |
-| `light` | Object | The light state of the device. can be found [here](#light). |
-| `presence` | Object | The presence state of the device. can be found [here](#presence). |
+| `system` | Object | The system state of the device. can be found above. |
+| `audio` | Object | The audio state of the device. can be found above. |
+| `light` | Object | The light state of the device. can be found above. |
+| `presence` | Object | The presence state of the device. can be found above. |
 
 __Example of a `full` state update:__
 
