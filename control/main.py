@@ -21,7 +21,7 @@ BASE_TOPIC = "PM/MLT"
 # Variables
 tiles: list[Tile] = []
 
-tile_channels = {}
+tile_channels: dict[str, list] = {}
 
 def on_connect(client: mqtt.Client, userdata, flags, rc) -> None:
   """The callback for when the client receives a CONNACK response from the server."""
@@ -230,7 +230,7 @@ async def ws_unsubscribe(websocket, message_json: dict) -> None:
     # TODO: unsubscribe from changes in tile list
     pass
   elif type == "state":
-    unsubscribe_tiles = str(message_json["tiles"])
+    unsubscribe_tiles = list(map(str, message_json["tiles"]))
     for tile in unsubscribe_tiles:
       # remove websocket from list of channels for the tile
       tile_channels[tile].remove(websocket)
