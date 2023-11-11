@@ -1,10 +1,11 @@
 import paho.mqtt.client as mqtt
 from tile import Tile, CmdType
 from pixel import Pixel
+import json
 import os
 import time
-#import asyncio
-#import websockets
+import asyncio
+from websockets.server import serve
 from dotenv import load_dotenv
 import threading
 
@@ -147,6 +148,160 @@ def send_command(client: mqtt.Client, tile: Tile, type: CmdType, command: str) -
   elif type == CmdType.LIGHT:
     client.publish(BASE_TOPIC+"/"+tile.device_name+"/self/command/light", command)
 
+async def api() -> None:
+  async with serve(on_ws_message, "localhost", 3000):
+    await asyncio.Future()  # run forever
+
+async def on_ws_message(websocket):
+  async for message in websocket:
+    # Convert message to JSON
+    message_json = json.loads(message)
+
+    # Get action from message
+    action = message_json["action"]
+
+    # Handle the action
+    if action == "subscribe":
+      await ws_subscribe(websocket, message_json)
+    elif action == "unsubscribe":
+      await ws_unsubscribe(message_json)
+    elif action == "command":
+      await ws_command(message_json)
+    else:
+      # Unknown action, do nothing
+      print("Unknown action: " + action)
+
+async def ws_subscribe(websocket, message_json: dict) -> None:
+  type = str(message_json["type"])
+
+  if type == "tiles":
+    # Create formatted list of tiles (json)
+    responds = {
+      "action": "tiles",
+      "type": "list",
+      "tiles": [tile.device_name for tile in tiles]
+    }
+
+    # Send list of tiles to client
+    await websocket.send(json.dumps(responds, indent=4))
+
+    # TODO: subscribe to changes in tile list
+
+  elif type == "state":
+    subscribe_tiles = list(map(str, message_json["tiles"]))
+
+    # Create formatted list of tiles (json)
+    for tile in subscribe_tiles:
+      # get tile from list
+      t = get_existing_tile(tile)
+      if t is None:
+        # Tile doesn't exist, do nothing
+        print("Tile " + tile + " doesn't exist")
+        continue
+      # return full state of tile
+      responds = {
+        "action": "state",
+        "type": "full",
+        "tile": t.device_name,
+        "args": {
+          "online": t.online,
+          "system": {
+            "firmware": t.firmware_version,
+            "hardware": t.hardware_version,
+            "ping": t.pinging,
+            "uptime": t.uptime,
+            "sounds": t.sounds
+          },
+          "audio": {
+            "state": t.audio_state,
+            "looping": t.audio_looping,
+            "sound": t.audio_sound,
+            "volume": t.audio_volume
+          },
+          "light": {
+            "brightness": t.brightness,
+            "pixels": [pixel.to_dict() for pixel in t.pixels]
+          },
+          "presence": {
+            "detected": t.detected
+          }
+        }
+      }
+      # Send state to the client
+      await websocket.send(json.dumps(responds, indent=4))
+      # TODO: subscribe to changes in tile state
+    print("Subscribed to state of tiles: " + str(subscribe_tiles))
+
+async def ws_unsubscribe(message_json: dict) -> None:
+  type = str(message_json["type"])
+
+  if type == "tiles":
+    # TODO: unsubscribe from changes in tile list
+    pass
+  elif type == "state":
+    unsubscribe_tiles = str(message_json["tiles"])
+    for tile in unsubscribe_tiles:
+      # TODO: unsubscribe from changes in tile state
+      pass
+    print("Unsubscribed from state of tiles: " + str(unsubscribe_tiles))
+
+async def ws_command(message_json: dict) -> None:
+  type = str(message_json["type"])
+  tiles_to_command = list(map(str, message_json["tiles"]))
+  args = dict(message_json["args"])
+
+  if type == "system":
+    reboot = bool(args["reboot"])
+    ping = bool(args["ping"])
+
+    for tile in tiles_to_command:
+      # get tile from list
+      t = get_existing_tile(tile)
+      if t is None:
+        # Tile doesn't exist, do nothing
+        print("Tile " + tile + " doesn't exist")
+        continue
+      # Send command to tile
+      send_command(client, t, CmdType.SYSTEM, t.create_system_command(reboot, ping))
+
+  elif type == "audio":
+    mode = int(args["mode"])
+    loop = bool(args["loop"])
+    sound = str(args["sound"])
+    volume = int(args["volume"])
+
+    for tile in tiles_to_command:
+      # get tile from list
+      t = get_existing_tile(tile)
+      if t is None:
+        # Tile doesn't exist, do nothing
+        print("Tile " + tile + " doesn't exist")
+        continue
+      # Send command to tile
+      send_command(client, t, CmdType.AUDIO, t.create_audio_command(mode, loop, sound, volume))
+
+  elif type == "light":
+    brightness = int(args["brightness"])
+    # Create list of pixels
+    pixels = [Pixel() for pixel in args["pixels"]]
+    # Add values to pixels
+    for i in range(len(pixels)):
+      pixels[i].from_dict(args["pixels"][i])
+
+    for tile in tiles_to_command:
+      # get tile from list
+      t = get_existing_tile(tile)
+      if t is None:
+        # Tile doesn't exist, do nothing
+        print("Tile " + tile + " doesn't exist")
+        continue
+      # Send command to tile
+      send_command(client, t, CmdType.LIGHT, t.create_light_command(brightness, pixels))
+
+  else:
+    # Unknown command type, do nothing
+    print("Unknown command type: " + type)
+
 # Main
 if __name__== "__main__":
   # Configure MQTT client
@@ -160,6 +315,9 @@ if __name__== "__main__":
 
   # Keep the client connected (start a new thread)
   client.loop_start()
+
+  # Run the api
+  asyncio.run(api())
 
   # Keep the program running (TODO: replace thiw with a proper alternative)
   while True:
