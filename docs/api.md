@@ -286,7 +286,7 @@ __The tile state is sent as a JSON object with the following properties:__
 | Property | Type | Description |
 | -------- | ---- | ----------- |
 | `action` | String | The action to perform. In this case, `state`. |
-| `type` | String | The type of update. Can be `system`, `audio`, `light`, `presence` or `full` |
+| `type` | String | The type of update. Can be `online`, `system`, `audio`, `light`, `presence` or `full`. |
 | `tile` | String | The name of the tile. |
 | `args` | Object | The arguments for the update. Each update type has its own arguments. |
 
@@ -298,6 +298,30 @@ __Example of a base state update:__
   "type": "full",
   "tile": "tile-1",
   "args": {}
+}
+```
+
+#### Online
+
+The `online` update type is used to send the online state of the tile.
+This update type is sent when the online state of the tile changes.
+
+__The `state` object for the `online` update type has the following properties:__
+
+| Property | Type | Description |
+| -------- | ---- | ----------- |
+| `online` | Boolean | Whether the device is online or not. |
+
+__Example of an `online` state update:__
+
+```json
+{
+  "action": "state",
+  "type": "online",
+  "tile": "tile-1",
+  "args": {
+    "online": true
+  }
 }
 ```
 
@@ -402,6 +426,30 @@ __Example of a `light` state update:__
 }
 ```
 
+#### Presence
+
+The `presence` update type is used to send presence updates to the client.
+This update type is sent when the presence state of the tile changes.
+
+__The `state` object for the `presence` update type has the following properties:__
+
+| Property | Type | Description |
+| -------- | ---- | ----------- |
+| `detected` | Boolean | Whether the device has detected something or not. |
+
+__Example of a `presence` state update:__
+
+```json
+{
+  "action": "state",
+  "type": "presence",
+  "tile": "tile-1",
+  "args": {
+    "detected": false
+  }
+}
+```
+
 #### Full
 
 The `full` update type is used to send the full state of the tile.
@@ -424,6 +472,7 @@ __Example of a `full` state update:__
   "type": "full",
   "tile": "tile-1",
   "args": {
+    "online": true,
     "system": {
       "firmware": "1.0.0",
       "hardware": "1.0.0",
