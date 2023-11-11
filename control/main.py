@@ -20,8 +20,8 @@ BASE_TOPIC = "PM/MLT"
 
 # Variables
 tiles: list[Tile] = []
-
-tile_channels: dict[str, list] = {}
+state_channels: dict[str, list] = {} # List of websockets that are subscribed to changes in the state of a tile
+tiles_channel: list = [] # List of websockets that are subscribed to changes in the tile list
 
 def on_connect(client: mqtt.Client, userdata, flags, rc) -> None:
   """The callback for when the client receives a CONNACK response from the server."""
@@ -75,7 +75,10 @@ def add_new_tile(client: mqtt.Client, tile_name: str) -> Tile:
   # schedule command for later (after 5 seconds, because the tile might not be fully initialized yet)
   threading.Timer(5.0, send_command, [client, tile, CmdType.SYSTEM, tile.create_system_command(False, False)]).start()
   # Add a list for the tile's channels
-  tile_channels[tile_name] = []
+  state_channels[tile_name] = []
+  # Send tile list changes to all ws clients
+  for ws in tiles_channel:
+    asyncio.run(ws_send_tiles_list_changes(ws, tile, "add"))
   # Return the tile (for further processing)
   return tile
 
@@ -101,7 +104,7 @@ def message_handler(tile: Tile, topic: str, payload: str) -> None:
     elif payload == "OFFLINE":
       tile.online = False
     # send online update to all ws clients
-    for ws in tile_channels[tile.device_name]:
+    for ws in state_channels[tile.device_name]:
       asyncio.run(ws_send_online(ws, tile))
     return
   
@@ -111,7 +114,7 @@ def message_handler(tile: Tile, topic: str, payload: str) -> None:
     if topic_parts[-1] == "system":
       tile.update_system_state(payload)
       # send system update to all ws clients
-      for ws in tile_channels[tile.device_name]:
+      for ws in state_channels[tile.device_name]:
         asyncio.run(ws_send_system(ws, tile))
       return
 
@@ -119,7 +122,7 @@ def message_handler(tile: Tile, topic: str, payload: str) -> None:
     if topic_parts[-1] == "audio":
       tile.update_audio_state(payload)
       # send audio update to all ws clients
-      for ws in tile_channels[tile.device_name]:
+      for ws in state_channels[tile.device_name]:
         asyncio.run(ws_send_audio(ws, tile))
       return
 
@@ -127,7 +130,7 @@ def message_handler(tile: Tile, topic: str, payload: str) -> None:
     if topic_parts[-1] == "light":
       tile.update_light_state(payload)
       # send light update to all ws clients
-      for ws in tile_channels[tile.device_name]:
+      for ws in state_channels[tile.device_name]:
         asyncio.run(ws_send_light(ws, tile))
       return
 
@@ -135,7 +138,7 @@ def message_handler(tile: Tile, topic: str, payload: str) -> None:
     if topic_parts[-1] == "presence":
       tile.update_presence_state(payload)
       # send presence update to all ws clients
-      for ws in tile_channels[tile.device_name]:
+      for ws in state_channels[tile.device_name]:
         asyncio.run(ws_send_presence(ws, tile))
       return
 
@@ -200,11 +203,10 @@ async def ws_subscribe(websocket, message_json: dict) -> None:
       "type": "list",
       "tiles": [tile.device_name for tile in tiles]
     }
-
     # Send list of tiles to client
     await websocket.send(json.dumps(responds, indent=4))
-
-    # TODO: subscribe to changes in tile list
+    # Add websocket to list of channels for the tile list
+    tiles_channel.append(websocket)
 
   elif type == "state":
     subscribe_tiles = list(map(str, message_json["tiles"]))
@@ -220,20 +222,20 @@ async def ws_subscribe(websocket, message_json: dict) -> None:
       # Send full state of tile to client
       await ws_send_full(websocket, t)
       # Add websocket to list of channels for the tile
-      tile_channels[tile].append(websocket)
+      state_channels[tile].append(websocket)
     print("Subscribed to state of tiles: " + str(subscribe_tiles))
 
 async def ws_unsubscribe(websocket, message_json: dict) -> None:
   type = str(message_json["type"])
 
   if type == "tiles":
-    # TODO: unsubscribe from changes in tile list
-    pass
+    # remove websocket from list of channels for the tile list
+    tiles_channel.remove(websocket)
   elif type == "state":
     unsubscribe_tiles = list(map(str, message_json["tiles"]))
     for tile in unsubscribe_tiles:
       # remove websocket from list of channels for the tile
-      tile_channels[tile].remove(websocket)
+      state_channels[tile].remove(websocket)
     print("Unsubscribed from state of tiles: " + str(unsubscribe_tiles))
 
 async def ws_command(message_json: dict) -> None:
@@ -400,6 +402,17 @@ async def ws_send_full(websocket, tile: Tile) -> None:
         "detected": tile.detected
       }
     }
+  }
+
+  # Send list of tiles to client
+  await websocket.send(json.dumps(responds, indent=4))
+
+async def ws_send_tiles_list_changes(websocket, tile: Tile, change: str) -> None:
+  # Create formatted list of tiles (json)
+  responds = {
+    "action": "tiles",
+    "type": change,
+    "tiles": [tile.device_name]
   }
 
   # Send list of tiles to client
