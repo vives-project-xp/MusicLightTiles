@@ -233,6 +233,7 @@ There are 2 actions the server can perform:
 
 This action is used to send a list of all tiles connected to the control server.
 When the client connects to the control server, the control server will send a list of all available tiles. (This also includes tiles that are offline)
+If the server doesn't have any tiles to send, this initial message will not be sent.
 After the client has received this list, the control server will only send updates when a tile is added or removed.
 This action is sent as a response to a [subscribe](#subscribe) action with the `type` set to `tiles`.
 
