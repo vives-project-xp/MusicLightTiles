@@ -197,26 +197,36 @@ async def ws_server(HOST: str = "localhost", PORT: int = 3000) -> None:
 
 async def ws_handler(websocket: WebSocketServerProtocol, path: str):
   """Handles incoming websocket connections."""
-  # Handle disconnects
-  # TODO: Handle disconnects
-  # Handle incoming messages
-  async for message in websocket:
-    # Convert message to JSON
-    message_json = json.loads(message)
+  try:
+    # Handle incoming messages
+    async for message in websocket:
+      # Convert message to JSON
+      message_json = json.loads(message)
 
-    # Get action from message
-    action = message_json["action"]
+      # Get action from message
+      action = message_json["action"]
 
-    # Handle the action
-    if action == "subscribe":
-      await ws_subscribe(websocket, message_json)
-    elif action == "unsubscribe":
-      await ws_unsubscribe(websocket, message_json)
-    elif action == "command":
-      await ws_command(websocket, message_json)
-    else:
-      # Unknown action, do nothing
-      print("Unknown action: " + action)
+      # Handle the action
+      if action == "subscribe":
+        await ws_subscribe(websocket, message_json)
+      elif action == "unsubscribe":
+        await ws_unsubscribe(websocket, message_json)
+      elif action == "command":
+        await ws_command(websocket, message_json)
+      else:
+        # Unknown action, do nothing
+        print("Unknown action: " + action)
+  except Exception as e:
+    # Print error
+    print(e)
+  finally:
+    # Client disconnected, remove websocket from all channels
+    print("Websocket: " + str(websocket) + " disconnected")
+    if websocket in channel_tiles:
+      channel_tiles.remove(websocket)
+    for tile_name in channel_states:
+      if websocket in channel_states[tile_name]:
+        channel_states[tile_name].remove(websocket)
 
 async def ws_subscribe(websocket: WebSocketServerProtocol, message_json: dict) -> None:
   """Subscribes the websocket to the given channels."""
