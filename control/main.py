@@ -103,7 +103,7 @@ def mqtt_on_message(client: mqtt.Client, userdata, msg: mqtt.MQTTMessage) -> Non
   
   # Process project master command (if pm_command_type has been set)
   if pm_command_type != None:
-    process_pm_command(pm_command_type, payload)
+    process_pm_command(pm_command_type, tile, payload)
     return
   
   # Set state type (if it's a state update)
@@ -388,27 +388,53 @@ class PMCmdType(Enum):
   RGB = 2
   EFFECT = 3
 
-def process_pm_command(pm_command_type, payload):
+def process_pm_command(pm_command_type, tile: Tile, payload):
   """Process a command from the project master"""
   if pm_command_type == PMCmdType.COMMAND:
-    process_pm_command_command(payload)
+    process_pm_command_command(tile, payload)
   elif pm_command_type == PMCmdType.RGB:
-    process_pm_rgb_command(payload)
+    process_pm_rgb_command(tile, payload)
   elif pm_command_type == PMCmdType.EFFECT:
-    process_pm_effect_command(payload)
+    process_pm_effect_command(tile, payload)
   else:
     # Unknown command type, do nothing
     print("Unknown project master command type: " + pm_command_type)
 
-def process_pm_command_command(payload):
-  # TODO: Implement function
-  pass
+def process_pm_command_command(tile: Tile, payload: str):
+  if payload == "ON":
+    # Send command to tile with brightness 127 (half brightness)
+    mqtt_send_command(mqtt_client, tile, CmdType.LIGHT, tile.create_light_command(brightness=127))
+    # Send command to tile to play sound "" with volume 75%
+    mqtt_send_command(mqtt_client, tile, CmdType.AUDIO, tile.create_audio_command(1,False,"Mario jump",75))
+  elif payload == "OFF":
+    # Send command to tile with brightness 0 (lights off)
+    mqtt_send_command(mqtt_client, tile, CmdType.LIGHT, tile.create_light_command(brightness=0))
+    # Send command to tile with audio mode 4 (stop audio)
+    mqtt_send_command(mqtt_client, tile, CmdType.AUDIO, tile.create_audio_command(mode=4))
+  else:
+    # Unknown command, do nothing
+    print("Received unknown command command from project master: " + payload)
 
-def process_pm_rgb_command(payload):
-  # TODO: Implement function
-  pass
+def process_pm_rgb_command(tile: Tile, payload: str):
+  # Recieved message 'r,g,b' from project master
+  try:
+    rgb = payload.split(",")
+    red = int(rgb[0])
+    green = int(rgb[1])
+    blue = int(rgb[2])
+    white = 0
+    # Create list of pixels
+    pixels = [Pixel() for pixel in tile.pixels]
+    # Add values to pixels
+    for i in range(len(pixels)):
+      pixels[i].from_dict({"r": red, "g": green, "b": blue, "w": white})
+    # Send command to tile with new pixels
+    mqtt_send_command(mqtt_client, tile, CmdType.LIGHT, tile.create_light_command(pixels=pixels))
+  except:
+    # Unknown command, do nothing
+    print("Received unknown rgb command from project master: " + payload)
 
-def process_pm_effect_command(payload):
+def process_pm_effect_command(tile: Tile, payload):
   # This project does not have any effects at this time.
   pass
 
