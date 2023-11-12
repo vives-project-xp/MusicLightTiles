@@ -1,5 +1,6 @@
 import os
 import json
+import time
 import asyncio
 import threading
 import paho.mqtt.client as mqtt
@@ -165,10 +166,9 @@ def create_new_tile(client: mqtt.Client, tile_name: str) -> Tile:
   client.subscribe(BASE_TOPIC+"/"+tile_name+"/command")
   client.subscribe(BASE_TOPIC+"/"+tile_name+"/rgb")
   client.subscribe(BASE_TOPIC+"/"+tile_name+"/effect")
-  # Set ping state of tile to False (to show that it's connected) 
-  # Schedule the command for later (after 5 seconds, because the tile might not be fully initialized yet)
-  threading.Timer(5.0, mqtt_send_command, [client, tile, CmdType.SYSTEM, tile.create_system_command(False, False)]).start()
-  
+  # Get values from new tile (after 5 seconds, to give the tile time to connect or initialize)
+  # This is done so that the controller has accurate values for the tile, even if it was already online before the controller started.
+  threading.Timer(5.0, get_values_from_new_tile, [client, tile]).start()
   # Add tile to the channel_states dict with an empty list (to put the subscribed websockets in)
   channel_states[tile_name] = []
   # Send tile list changes to all ws clients
@@ -187,6 +187,38 @@ def get_event_loop() -> asyncio.AbstractEventLoop:
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
   return loop
+
+def get_values_from_new_tile(client: mqtt.Client, tile: Tile) -> None:
+  """Sends commands to the tile to get the current values.
+
+  Used to get missing values if a tile was already online before the controller started."""
+  # Get system values
+  while tile.firmware_version == "" or tile.hardware_version == "" or tile.sounds == []:
+    # Send command to tile to get system state
+    mqtt_send_command(mqtt_client, tile, CmdType.SYSTEM, tile.create_system_command(False, True))
+    # Wait for 2 second (because ping is every second)
+    time.sleep(2)
+  # Turn off the ping state of the tile (to show that it's connected)
+  mqtt_send_command(mqtt_client, tile, CmdType.SYSTEM, tile.create_system_command(False, False))
+  print("Got system values from tile " + tile.device_name)
+  # Get audio values
+  while tile.audio_sound == "":
+    # Send command to tile to get audio state
+    mqtt_send_command(mqtt_client, tile, CmdType.AUDIO, tile.create_audio_command(1, False, tile.sounds[0], 0))
+    # Wait for 1 second
+    time.sleep(1)
+  # Set audio mode to 4 (stop audio)
+  mqtt_send_command(mqtt_client, tile, CmdType.AUDIO, tile.create_audio_command(4))
+  print("Got audio values from tile " + tile.device_name)
+  # Get light values
+  while tile.pixels == []:
+    # Send command to tile to get light state
+    mqtt_send_command(mqtt_client, tile, CmdType.LIGHT, tile.create_light_command(brightness=255))
+    # Wait for 1 second
+    time.sleep(1)
+  # Set brightness back to 0 (to turn off the lights)
+  mqtt_send_command(mqtt_client, tile, CmdType.LIGHT, tile.create_light_command(brightness=0))
+  print("Got light values from tile " + tile.device_name)
 
 # --- Websocket ---
 async def ws_server(HOST: str = "localhost", PORT: int = 3000) -> None:
