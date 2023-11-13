@@ -9,7 +9,7 @@ De behuizing van de tegel is 40x40cm. Dit is groot genoeg voor een volwassen per
 gemaakt is van hout. Dit zorgt voor een stevige basis waarop de 3D-geprintte stukken kunnen worden bevestigd.
 In deze behuizing wordt er een seal strip bevestigd waarop de bovenste plaat komt. De bovenste plaat bestaat uit een stuk plexiglas 
 die lichtjes doorschijnend is.
-![Person detection](./img/sectionview.png)
+![Person detection](../img/sectionview.png)
 Zoals je kan zien zitten er aan de buitenkant 2 stukken seal strip. Wanneer er op het plexiglas wordt gestaan wordt de tegel geactiveerd.
 ## Hardware
 De hardware van de tegel bevindt zicht binnenin de tegel. Het brein van de tegel is de microcontroller, dit is de ESP32 DevkitM-1.
@@ -19,4 +19,9 @@ microcontroller dan een signaal sturen naar deze componenten. Hierbij licht de R
 Deze hardware wordt gevoedt door een 24V adapter. We hebben deze 24V nodig voor de ledstrip. De ESP32 werkt op een spanning van 5V 
 dus hebben we een BUCK converter gebruikt die van 24V naar 5V kan converteren. De luidspreker is dan aangesloten op de 3.3V pin van de microcontroller.
 ## Code 
-Wij hebben de microcontroller geprogrammeerd via C++.
+Wij hebben de microcontroller geprogrammeerd via C++. We gebruiken verschillende libraries om de hardware aan te sturen. We hebben deze libraries nodig om de RGB ledstrip en de luidspreker aan te sturen. Ook hebben we libraries om te kunnen verbinden met de MQTT server. De code zorgt er voor dat we kunnen verbinden met MQTT. Dit is nodig want we werken samen met een ander project die het licht en geluid beheert van ons project. Via MQTT krijgen wij dan een commando binnen die zegt wat de hardware moet doen.
+## MQTT
+Zoals eerder al gezegd gebruiken we MQTT om ons geluid en licht aan te sturen. We hebben een topic gemaakt waarop we een commando kunnen sturen. Dit commando is een string die een bepaalde waarde heeft. Deze waarde is dan een commando die de hardware moet uitvoeren. Zo hebben we een commando voor het licht aan te zetten en kunnen we kiezen welke kleur. Ook hebben we een assortiment van geluiden waar we uit kunnen kiezen. Deze geluiden zijn dan opgeslagen op de MP3 speler.
+## Websocket
+NEEDS TO BE DONE
+
