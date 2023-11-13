@@ -1,5 +1,5 @@
-# Handleiding Music Tile
-![360° view](./img/360.gif)
+# De Music Tile
+![360° view](../img/360.gif)
 ## Inleiding
 De MusicTile is een tegel die licht en geluid kan produceren wanneer deze geactiveerd wordt. 
 De tegel kan je activeren wanneer er voldoende kracht wordt op uitgevoerd, bijvoorbeeld wanneer er dus een persoon gaat opstaan.
@@ -9,5 +9,14 @@ De behuizing van de tegel is 40x40cm. Dit is groot genoeg voor een volwassen per
 gemaakt is van hout. Dit zorgt voor een stevige basis waarop de 3D-geprintte stukken kunnen worden bevestigd.
 In deze behuizing wordt er een seal strip bevestigd waarop de bovenste plaat komt. De bovenste plaat bestaat uit een stuk plexiglas 
 die lichtjes doorschijnend is.
-![Person detection](./media/sectionview.png)
+![Person detection](./img/sectionview.png)
 Zoals je kan zien zitten er aan de buitenkant 2 stukken seal strip. Wanneer er op het plexiglas wordt gestaan wordt de tegel geactiveerd.
+## Hardware
+De hardware van de tegel bevindt zicht binnenin de tegel. Het brein van de tegel is de microcontroller, dit is de ESP32 DevkitM-1.
+Deze microcontroller wordt dan verbonden met de RGB-strip en de luidspreker via de datapinnen. Bij het activeren van de tegel zal deze
+microcontroller dan een signaal sturen naar deze componenten. Hierbij licht de RGB ledstrip op en zal de luidspreker geluid produceren.
+## Voeding
+Deze hardware wordt gevoedt door een 24V adapter. We hebben deze 24V nodig voor de ledstrip. De ESP32 werkt op een spanning van 5V 
+dus hebben we een BUCK converter gebruikt die van 24V naar 5V kan converteren. De luidspreker is dan aangesloten op de 3.3V pin van de microcontroller.
+## Code 
+Wij hebben de microcontroller geprogrammeerd via C++.
