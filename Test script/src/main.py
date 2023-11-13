@@ -1,5 +1,6 @@
 
 import os
+import json
 import paho.mqtt.client as mqtt
 
 
@@ -8,7 +9,7 @@ import paho.mqtt.client as mqtt
 
 def setup_mqtt():
     client = mqtt.client()
-    client.username_pw_set(os.getenv("MQTT_USERNAME"), os.getenv("MQTT_PASSWORD") )
+    client.username_pw_set(os.getenv("MQTT_USERNAME"), os.getenv("MQTT_PASSWORD"))
     client.connect(os.getenv("MQTT_HOST"), int(os.getenv("MQTT_PORT")))
     return client
 
@@ -16,46 +17,70 @@ def setup_mqtt():
 
 # Function to send message to tile
 
-def send_message(tile_id, message):
+def send_message(tile_id,subtopic, message):
+    topic = f"PM/MLT/{tile_id}/self/{subtopic}/"
     client = setup_mqtt()
-    client.publish(f"tile/{tile_id}/text", message)
+    client.publish(topic, json.dumps(message))
     client.disconnect()
 
 
  # Function to ask the user for visual confirmation
 
 def ask_confirmation():
-    user_input = input("Is the test correct? (y/n): ").strip().lower()
-    return user_input =="y"
+    user_input = input("Is the test correct? (yes/no): ").strip().lower()
+    return user_input =="yes"
 
     
 
-#Function to test the tile
+# test audio
 
-def test_tile(tile_id, message):
+def test_audio(tile_id):
     
-    print(f"Testing tile {tile_id}: {message}")
-    send_message(tile_id, message)
+    print(f"Testing audio state for tile {tile_id}")
+      
+      # Simulate system
+
+    audio_state = {
+
+        "state": 2,
+        "looping": False,
+        "sound" : "Mario coin",
+        "volume": 50,
+    }
+    
+    # send audio message
+    send_message("PM/MLT/" ,tile_id, "self/command/audio", audio_state)
 
     if ask_confirmation():
         return "Test passed"
     else:
         return "Test failed"
-
-# Function to run the test for tiles that are selected
-
-def run_test(selected_tiles, message):
     
-    test_results = {}
 
-    for tile_id in selected_tiles:
-        test_results[tile_id] = {}
 
-        for command in message:
-            result =  test_tile(tile_id, message)
-            test_results[tile_id][command] = result
+# Test light
+def test_lights(tile_id):
+        print(f"Testing light state: {tile_id} ")
 
-    return test_results
+        light_state = {
+            "brightness": 50,
+            "pixels": [{"r": 255, "g": 0, "b": 0, "w": 0}]
+        }
+
+        # message
+        send_message("PM/MLT/",tile_id, "self/command/light",test_lights)
+
+
+def test_system(tile_id):
+    print(f"Testing system state: {tile_id}")
+
+    system_state = {
+        "firmware": "1.0.0",
+        "hardware": "1.0.0",
+        "ping": False,
+        "uptime":1234,
+        "sounds": ["Mario coin", "Mario jump"]
+    }
 
 
 
@@ -63,31 +88,126 @@ def run_test(selected_tiles, message):
 if __name__=="__main__":
 
     #ask user for topic
-     topic = input("Enter the topic please:")
+     topic = input("Enter the topic please: ")
      selected_tiles = input("Select the tiles (seperate by a comma)").split(",")
 
-     # Define list of commands
-commands = ["change pixelcolor", "Play audio", "set volume", "set brightness", "reboot"]
+
+ 
+import os
+import json
+import paho.mqtt.client as mqtt
+
+
+
+# Make connection with mqtt
+
+def setup_mqtt():
+    client = mqtt.client()
+    client.username_pw_set(os.getenv("MQTT_USERNAME"), os.getenv("MQTT_PASSWORD"))
+    client.connect(os.getenv("MQTT_HOST"), int(os.getenv("MQTT_PORT")))
+    return client
+
+
+
+# Function to send message to tile
+
+def send_message(tile_id,subtopic, message):
+    topic = f"PM/MLT/{tile_id}/self/{subtopic}/"
+    client = setup_mqtt()
+    client.publish(topic, json.dumps(message))
+    client.disconnect()
+
+
+ # Function to ask the user for visual confirmation
+
+def ask_confirmation():
+    user_input = input("Is the test correct? (yes/no): ").strip().lower()
+    return user_input =="yes"
+
+    
+
+# test audio
+
+def test_audio(tile_id):
+    
+    print(f"Testing audio state for tile {tile_id}")
+      
+      # Simulate system
+
+    audio_state = {
+
+        "state": 2,
+        "looping": False,
+        "sound" : "Mario coin",
+        "volume": 50,
+    }
+    
+    # send audio message
+    send_message("PM/MLT/" ,tile_id, "self/command/audio", audio_state)
+
+    if ask_confirmation():
+        return "Test passed"
+    else:
+        return "Test failed"
+    
+
+
+# Test light
+def test_lights(tile_id):
+        print(f"Testing light state: {tile_id} ")
+
+        light_state = {
+            "brightness": 50,
+            "pixels": [{"r": 255, "g": 0, "b": 0, "w": 0}]
+        }
+
+        # message
+        send_message("PM/MLT/",tile_id, "self/command/light",test_lights)
+
+
+def test_system(tile_id):
+    print(f"Testing system state: {tile_id}")
+
+    system_state = {
+        "firmware": "1.0.0",
+        "hardware": "1.0.0",
+        "ping": False,
+        "uptime":1234,
+        "sounds": ["Mario coin", "Mario jump"]
+    }
+
+
+
+# main function
+if __name__=="__main__":
+
+    #ask user for topic
+     topic = input("Enter the topic please: ")
+     selected_tiles = input("Select the tiles (seperate by a comma)").split(",")
 
 
     # Set mqtt-connection
 mqtt_client = setup_mqtt()
 
     # Run tests
-test_results = run_test(selected_tiles, commands)
+result_system_state = test_system(selected_tiles)
+result_audio = test_audio(selected_tiles)
+result_lights = test_lights(selected_tiles)
+
+    
 
 #  print results
-
-print("Results: ")
-
-for tile_id, results in test_results.items():
-    print(f"Tile {tile_id}:")
-    for command, result in results.items():
-        print(f"  {command}: {result}")
+print(result_system_state)
+print(result_audio)
+print(result_lights)
 
 
 # Disconnect mqtt
 mqtt_client.disconnect()
+
+
+
+
 
 
 
