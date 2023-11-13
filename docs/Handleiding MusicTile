@@ -1,0 +1,13 @@
+# Handleiding Music Tile
+![360° view](./media/360.gif)
+## Inleiding
+De MusicTile is een tegel die licht en geluid kan produceren wanneer deze geactiveerd wordt. 
+De tegel kan je activeren wanneer er voldoende kracht wordt op uitgevoerd, bijvoorbeeld wanneer er dus een persoon gaat opstaan.
+In dit bestand zal worden uitgelegd hoe deze tegel werkt en hoe wij deze tegel hebben gemaakt. 
+## Behuizing
+De behuizing van de tegel is 40x40cm. Dit is groot genoeg voor een volwassen persoon. De behuizing is een 3D-print waarbij de basis 
+gemaakt is van hout. Dit zorgt voor een stevige basis waarop de 3D-geprintte stukken kunnen worden bevestigd.
+In deze behuizing wordt er een seal strip bevestigd waarop de bovenste plaat komt. De bovenste plaat bestaat uit een stuk plexiglas 
+die lichtjes doorschijnend is.
+![Person detection](./media/sectionview.png)
+Zoals je kan zien zitten er aan de buitenkant 2 stukken seal strip. Wanneer er op het plexiglas wordt gestaan wordt de tegel geactiveerd.
