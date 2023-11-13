@@ -40,11 +40,11 @@ struct Pixel {
 };
 
 // Define pin constants
-#define MODE_SWITCH_PIN 4  // pin for mode switch
-#define PRESENCE_PIN 5     // pin for presence detection
-#define LEDSTRIP_PIN 7     // pin for led strip
-#define RX_PIN 8           // pin rx, should be connected to tx of dfplayer
-#define TX_PIN 9           // pin tx, should be connected to rx of dfplayer
+#define MODE_SWITCH_PIN 10 // pin for mode switch
+#define PRESENCE_PIN 19    // pin for presence detection
+#define LEDSTRIP_PIN 18    // pin for led strip
+#define RX_PIN 1           // pin rx, should be connected to tx of dfplayer
+#define TX_PIN 0           // pin tx, should be connected to rx of dfplayer
 
 // Define MQTT constants
 const char* rootTopic = "PM/MLT";
