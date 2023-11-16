@@ -63,19 +63,16 @@ class SystemState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Center(child: Text('System State')),
-          Center(child: Text('Online: ${tile.online}')),
-          Center(child: Text('Firmware Version: ${tile.firmwareVersion}')),
-          Center(child: Text('Hardware Version: ${tile.hardwareVersion}')),
-          Center(child: Text('Pinging: ${tile.pinging}')),
-          Center(child: Text('Uptime: ${tile.uptime}')),
-          Center(child: Text('Sounds: ${tile.sounds}')),
-        ],
-      )
+    return ListView(
+      children: [
+        const Center(child: Text('System State')),
+        Center(child: Text('Online: ${tile.online}')),
+        Center(child: Text('Firmware Version: ${tile.firmwareVersion}')),
+        Center(child: Text('Hardware Version: ${tile.hardwareVersion}')),
+        Center(child: Text('Pinging: ${tile.pinging}')),
+        Center(child: Text('Uptime: ${tile.uptime}')),
+        Center(child: Text('Sounds: ${tile.sounds}')),
+      ],
     );
   }
 }
@@ -87,17 +84,14 @@ class AudioState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Center(child: Text('Audio State')),
-          Center(child: Text('State: ${tile.audioState}')),
-          Center(child: Text('Looping: ${tile.audioLooping}')),
-          Center(child: Text('Sound: ${tile.audioSound}')),
-          Center(child: Text('Volume: ${tile.audioVolume}')),
-        ],
-      )
+    return ListView(
+      children: [
+        const Center(child: Text('Audio State')),
+        Center(child: Text('State: ${tile.audioState}')),
+        Center(child: Text('Looping: ${tile.audioLooping}')),
+        Center(child: Text('Sound: ${tile.audioSound}')),
+        Center(child: Text('Volume: ${tile.audioVolume}')),
+      ],
     );
   }
 }
@@ -109,17 +103,14 @@ class LightState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Center(child: Text('Light State')),
-          Center(child: Text('Brightness: ${tile.brightness}')),
-          const Center(child: Text('Pixels:')),
-          for (var i = 0; i < tile.pixels.length; i++)
-            Center(child: Text(tile.pixels[i].toJson().toString())),
-        ],
-      )
+    return ListView(
+      children: [
+        const Center(child: Text('Light State')),
+        Center(child: Text('Brightness: ${tile.brightness}')),
+        const Center(child: Text('Pixels:')),
+        for (var i = 0; i < tile.pixels.length; i++)
+          Center(child: Text(tile.pixels[i].toJson().toString())),
+      ],
     );
   }
 }
@@ -131,14 +122,11 @@ class PresenceState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Center(child: Text('Presence State')),
-          Center(child: Text('Detected: ${tile.detected}')),
-        ],
-      )
+    return ListView(
+      children: [
+        const Center(child: Text('Presence State')),
+        Center(child: Text('Detected: ${tile.detected}')),
+      ],
     );
   }
 }
