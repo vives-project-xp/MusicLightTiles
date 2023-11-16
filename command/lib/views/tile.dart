@@ -65,6 +65,7 @@ class SystemState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Center(child: Text('System State')),
           Center(child: Text('Online: ${tile.online}')),
@@ -86,12 +87,17 @@ class AudioState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: Center(
-          child: Text('Audio State'),
-        ),
-      ),
+    return Scaffold(
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Center(child: Text('Audio State')),
+          Center(child: Text('State: ${tile.audioState}')),
+          Center(child: Text('Looping: ${tile.audioLooping}')),
+          Center(child: Text('Sound: ${tile.audioSound}')),
+          Center(child: Text('Volume: ${tile.audioVolume}')),
+        ],
+      )
     );
   }
 }
@@ -103,12 +109,17 @@ class LightState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: Center(
-          child: Text('Light State'),
-        ),
-      ),
+    return Scaffold(
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Center(child: Text('Light State')),
+          Center(child: Text('Brightness: ${tile.brightness}')),
+          const Center(child: Text('Pixels:')),
+          for (var i = 0; i < tile.pixels.length; i++)
+            Center(child: Text(tile.pixels[i].toJson().toString())),
+        ],
+      )
     );
   }
 }
@@ -120,12 +131,14 @@ class PresenceState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: Center(
-          child: Text('Presence State'),
-        ),
-      ),
+    return Scaffold(
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Center(child: Text('Presence State')),
+          Center(child: Text('Detected: ${tile.detected}')),
+        ],
+      )
     );
   }
 }
