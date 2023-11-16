@@ -47,8 +47,17 @@ class HomePage extends StatelessWidget {
               ),
           floatingActionButton: FloatingActionButton(
             onPressed: () {
-              // Add a new tile
-              tileModel.addTile(Tile('0'));
+              // Create a new tile
+              Tile tile = Tile('${tileModel.tiles.length + 1}');
+              // Set tile online
+              tile.online = true;
+              // Set tile pixels
+              for (int i = 0; i < 12; i++) {
+                tile.pixels.add(Pixel());
+              }
+              // Add tile to tile model
+              tileModel.addTile(tile);
+
             },
             tooltip: 'Add Tile',
             child: const Icon(Icons.add),
