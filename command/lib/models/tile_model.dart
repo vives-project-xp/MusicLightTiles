@@ -49,16 +49,7 @@ class Tile {
 }
 
 class TileModel extends ChangeNotifier {
-  final List<Tile> _tiles = [
-    Tile('1'),
-    Tile('2'),
-    Tile('3'),
-    Tile('4'),
-    Tile('5'),
-    Tile('6'),
-    Tile('7'),
-    Tile('8'),
-  ];
+  final List<Tile> _tiles = [];
   List<Tile> get tiles => _tiles;
 
   void addTile(Tile tile) {
