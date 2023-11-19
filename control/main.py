@@ -192,6 +192,9 @@ def get_values_from_new_tile(client: mqtt.Client, tile: Tile) -> None:
   """Sends commands to the tile to get the current values.
 
   Used to get missing values if a tile was already online before the controller started."""
+  if tile.online == False:
+    # Tile is offline, do nothing
+    return
   # Get system values
   while tile.firmware_version == "" or tile.hardware_version == "" or tile.sounds == []:
     # Send command to tile to get system state
