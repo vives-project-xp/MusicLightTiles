@@ -10,48 +10,67 @@ class TilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Theme.of(context).colorScheme.onPrimary,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          tooltip: 'Home',
-          onPressed: () => context.go("/"), // Go back to home screen
+    return DefaultTabController(
+      length: 2, 
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          foregroundColor: Theme.of(context).colorScheme.onPrimary,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            tooltip: 'Home',
+            onPressed: () => context.go("/"), // Go back to home screen
+          ),
+          bottom: const TabBar(
+              tabs: [
+                Tab(text: 'Command'),
+                Tab(text: 'State'),
+              ],
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white60,
+            ),
+          title: Text(tile.deviceName),
+          centerTitle: true,
         ),
-        title: Text(tile.deviceName),
-        centerTitle: true,
-        automaticallyImplyLeading: false,
+        body: TabBarView(
+          children: [
+            const Center(child: Text('Command')),
+            TileState(tile: tile),
+          ],
+        ),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: SystemState(tile: tile),
-          ),
-          // Add devider between system state and audio state
-          const Divider(
-            indent: 20,
-            endIndent: 20,
-          ),
-          Expanded(
-            child: AudioState(tile: tile),
-          ),
-          const Divider(
-            indent: 20,
-            endIndent: 20,
-          ),
-          Expanded(
-            child: LightState(tile: tile),
-          ),
-          const Divider(
-            indent: 20,
-            endIndent: 20,
-          ),
-          Expanded(
-            child: PresenceState(tile: tile),
-          ),
-        ],
-      ),
+    );
+  }
+}
+
+class TileState extends StatelessWidget {
+  const TileState({super.key, required this.tile});
+
+  final Tile tile;
+
+  @override
+  Widget build(BuildContext context) {
+    return 
+    
+    Column(
+      children: [
+        Expanded(child: SystemState(tile: tile)),
+        const Divider(
+              indent: 20,
+              endIndent: 20,
+            ),
+        Expanded(child: AudioState(tile: tile)),
+        const Divider(
+              indent: 20,
+              endIndent: 20,
+            ),
+        Expanded(child: LightState(tile: tile)),
+        const Divider(
+              indent: 20,
+              endIndent: 20,
+            ),
+        Expanded(child: PresenceState(tile: tile)),
+      ],
     );
   }
 }
