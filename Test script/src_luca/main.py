@@ -70,16 +70,26 @@ client.subscribe(f"{mqtt_topic_state}/presence")
 led_command = {
     "brightness": 255,  # Set brightness to maximum
     "pixels": [
-        {"r": 255, "g": 0, "b": 0, "w": 0},  # Set the first LED to red
+        {"r": 0, "g": 255, "b": 0, "w": 0},  # Set the first LED to red
         {"r": 0, "g": 255, "b": 0, "w": 0},  # Set the second LED to green
-        # Add more LEDs as needed
+        {"r": 0, "g": 255, "b": 0, "w": 0},
+        {"r": 0, "g": 255, "b": 0, "w": 0},
+        {"r": 0, "g": 255, "b": 0, "w": 0},
+        {"r": 0, "g": 255, "b": 0, "w": 0},
+        {"r": 0, "g": 255, "b": 0, "w": 0},
+        {"r": 0, "g": 255, "b": 0, "w": 0},
+        {"r": 0, "g": 255, "b": 0, "w": 0},
+        {"r": 0, "g": 255, "b": 0, "w": 0},
+        {"r": 0, "g": 255, "b": 0, "w": 0},
+        {"r": 0, "g": 255, "b": 0, "w": 0},
+        
     ]
 }
 
 # Example command for controlling audio
 audio_command = {
-    "mode": 1,  # Play
-    "loop": True,
+    "state": 1,  # Play
+    "looping": True,
     "sound": "Mario jump",
     "volume": 50  # Set volume to 50%
 }
@@ -89,18 +99,9 @@ system_update_command = {
     "ping": True
 }
 
-'''
-light_command = {
-    "brightness": 150,
-    "pixels": [
-        {"r": 0, "g": 0, "b": 255, "w": 0},  # Set the first light to blue
-        {"r": 255, "g": 255, "b": 0, "w": 0},  # Set the second light to yellow
-        # Add more lights as needed
-    ]
-} '''
 
 # Example presence detection state
-presence_detected = {"detected": True}
+# presence_detected = {"detected": True}
 
 
 # Send the LED command
