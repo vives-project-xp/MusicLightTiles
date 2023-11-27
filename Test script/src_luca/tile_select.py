@@ -1,3 +1,4 @@
+
 import paho.mqtt.client as mqtt
 import json
 import time
@@ -7,11 +8,7 @@ mqtt_broker = "mqtt.devbit.be"
 mqtt_port = 1883
 mqtt_user = None
 mqtt_password = None
-# mqtt_topic_command = "PM/MLT/TILE1/self/command"
-# mqtt_topic_state = "PM/MLT/TILE1/self/state"
 topic_prefix = "PM/MLT"
-
-
 
 # Function to send a command to the Arduino
 def send_command(command, subtopic):
@@ -31,6 +28,7 @@ def send_command(command, subtopic):
 
     # Disconnect from the broker
     client.disconnect()
+
 # Function to publish presence state
 def publish_presence_state(detected, subtopic):
     topic = f"{topic_prefix}/{subtopic}/self/state/presence"
@@ -48,10 +46,6 @@ def publish_presence_state(detected, subtopic):
     # Disconnect from the broker
     client.disconnect()
 
-def on_connect(client, userdata, flags, rc):
-    print("Connected with result code " + str(rc))
-    # Subscribe to the topics of interest
-    client.subscribe(topic_prefix + "/+/self")
 # MQTT Callbacks
 def on_message(client, userdata, msg):
     topic = msg.topic
@@ -67,7 +61,7 @@ client.on_message = on_message
 client.connect(mqtt_broker, mqtt_port, 60)
 
 # User input to choose the tile
-selected_tile = input("Enter the tile number (e.g., TILE1, TILE2): ")
+selected_tile = input("Enter the tile name (e.g., TILE1, TILE2): ")
 
 # Subscribe to command topics for the selected tile
 client.subscribe(f"{topic_prefix}/{selected_tile}/self/command/audio")
@@ -77,30 +71,16 @@ client.subscribe(f"{topic_prefix}/{selected_tile}/self/state/presence")
 
 # Example command for controlling the LED strip
 led_command = {
-    "brightness": 255,  # Set brightness to maximum
-    "pixels": [
-        {"r": 0, "g": 255, "b": 0, "w": 0},  # Set the first LED to red
-        {"r": 0, "g": 255, "b": 0, "w": 0},  # Set the second LED to green
-        {"r": 0, "g": 255, "b": 0, "w": 0},
-        {"r": 0, "g": 255, "b": 0, "w": 0},
-        {"r": 0, "g": 255, "b": 0, "w": 0},
-        {"r": 0, "g": 255, "b": 0, "w": 0},
-        {"r": 0, "g": 255, "b": 0, "w": 0},
-        {"r": 0, "g": 255, "b": 0, "w": 0},
-        {"r": 0, "g": 255, "b": 0, "w": 0},
-        {"r": 0, "g": 255, "b": 0, "w": 0},
-        {"r": 0, "g": 255, "b": 0, "w": 0},
-        {"r": 0, "g": 255, "b": 0, "w": 0},
-        
-    ]
+    "brightness": 255,
+    "pixels": [{"r": 0, "g": 255, "b": 0, "w": 0}] * 12
 }
 
 # Example command for controlling audio
 audio_command = {
-    "state": 1,  # Play
+    "state": 1,
     "looping": True,
     "sound": "Mario jump",
-    "volume": 50  # Set volume to 50%
+    "volume": 50
 }
 
 system_update_command = {
@@ -108,27 +88,23 @@ system_update_command = {
     "ping": True
 }
 
-
-# Example presence detection state
-# presence_detected = {"detected": True}
-
-
 # Send the LED command
-send_command(led_command, "light")
+send_command(led_command, selected_tile)
 
-# Wait for a while (e.g., simulate a delay in your Python program)
+# Wait for a while
 time.sleep(5)
 
 # Send the audio command
-send_command(audio_command, "audio")
+send_command(audio_command, selected_tile)
 
 time.sleep(5)
 
 # Send the system update command
-send_command(system_update_command, "system")
+send_command(system_update_command, selected_tile)
 
 # Publish presence detection state
 publish_presence_state(detected=True, subtopic=selected_tile)
 
 # Loop to listen for messages
 client.loop_forever()
+

@@ -1,3 +1,4 @@
+'''
 import paho.mqtt.client as mqtt
 import json
 import time
@@ -123,3 +124,4 @@ publish_presence_state(detected=True)
 
 # Loop to listen for messages
 client.loop_forever()
+'''
