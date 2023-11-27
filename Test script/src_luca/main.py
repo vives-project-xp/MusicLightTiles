@@ -8,12 +8,11 @@ mqtt_broker = "mqtt.devbit.be"
 mqtt_port = 1883
 mqtt_user = None
 mqtt_password = None
-mqtt_topic_command = "PM/MLT/TILE1/self/command"
-mqtt_topic_state = "PM/MLT/TILE1/self/state"
+topic_prefix = "PM/MLT"
 
 # Function to send a command to the Arduino
-def send_command(command, subtopic):
-    topic = f"{mqtt_topic_command}/{subtopic}"
+def send_command(subtopic, command_type, command):
+    topic = f"{topic_prefix}/{subtopic}/self/command/{command_type}"
     client = mqtt.Client()
     client.username_pw_set(mqtt_user, mqtt_password)
     client.connect(mqtt_broker, mqtt_port, 60)
@@ -29,9 +28,10 @@ def send_command(command, subtopic):
 
     # Disconnect from the broker
     client.disconnect()
+
 # Function to publish presence state
-def publish_presence_state(detected):
-    topic = f"{mqtt_topic_state}/presence"
+def publish_presence_state(detected, subtopic):
+    topic = f"{topic_prefix}/{subtopic}/self/state/presence"
     client = mqtt.Client()
     client.username_pw_set(mqtt_user, mqtt_password)
     client.connect(mqtt_broker, mqtt_port, 60)
@@ -45,7 +45,6 @@ def publish_presence_state(detected):
 
     # Disconnect from the broker
     client.disconnect()
-
 
 # MQTT Callbacks
 def on_message(client, userdata, msg):
@@ -61,38 +60,27 @@ client.username_pw_set(mqtt_user, mqtt_password)
 client.on_message = on_message
 client.connect(mqtt_broker, mqtt_port, 60)
 
-# Subscribe to command topics
-client.subscribe(f"{mqtt_topic_command}/audio")
-client.subscribe(f"{mqtt_topic_command}/light")
-client.subscribe(f"{mqtt_topic_command}/system")
-client.subscribe(f"{mqtt_topic_state}/presence")
+# User input to choose the tile
+selected_tile = input("Enter the tile name (e.g., TILE1, TILE2): ")
+
+# Subscribe to command topics for the selected tile
+client.subscribe(f"{topic_prefix}/{selected_tile}/self/command/audio")
+client.subscribe(f"{topic_prefix}/{selected_tile}/self/command/light")
+client.subscribe(f"{topic_prefix}/{selected_tile}/self/command/system")
+client.subscribe(f"{topic_prefix}/{selected_tile}/self/state/presence")
 
 # Example command for controlling the LED strip
 led_command = {
-    "brightness": 255,  # Set brightness to maximum
-    "pixels": [
-        {"r": 0, "g": 255, "b": 0, "w": 0},  # Set the first LED to red
-        {"r": 0, "g": 255, "b": 0, "w": 0},  # Set the second LED to green
-        {"r": 0, "g": 255, "b": 0, "w": 0},
-        {"r": 0, "g": 255, "b": 0, "w": 0},
-        {"r": 0, "g": 255, "b": 0, "w": 0},
-        {"r": 0, "g": 255, "b": 0, "w": 0},
-        {"r": 0, "g": 255, "b": 0, "w": 0},
-        {"r": 0, "g": 255, "b": 0, "w": 0},
-        {"r": 0, "g": 255, "b": 0, "w": 0},
-        {"r": 0, "g": 255, "b": 0, "w": 0},
-        {"r": 0, "g": 255, "b": 0, "w": 0},
-        {"r": 0, "g": 255, "b": 0, "w": 0},
-        
-    ]
+    "brightness": 255,
+    "pixels": [{"r": 0, "g": 255, "b": 0, "w": 0}] * 12
 }
 
 # Example command for controlling audio
 audio_command = {
-    "state": 1,  # Play
+    "state": 1,
     "looping": True,
     "sound": "Mario jump",
-    "volume": 50  # Set volume to 50%
+    "volume": 50
 }
 
 system_update_command = {
@@ -100,28 +88,24 @@ system_update_command = {
     "ping": True
 }
 
-
-# Example presence detection state
-# presence_detected = {"detected": True}
-
-
 # Send the LED command
-send_command(led_command, "light")
+send_command(selected_tile, "light", led_command)
 
-# Wait for a while (e.g., simulate a delay in your Python program)
+# Wait for a while
 time.sleep(5)
 
 # Send the audio command
-send_command(audio_command, "audio")
+send_command(selected_tile, "audio", audio_command)
 
 time.sleep(5)
 
 # Send the system update command
-send_command(system_update_command, "system")
+send_command(selected_tile, "system", system_update_command)
 
 # Publish presence detection state
-publish_presence_state(detected=True)
+publish_presence_state(detected=True, subtopic=selected_tile)
 
 # Loop to listen for messages
 client.loop_forever()
+
 '''
