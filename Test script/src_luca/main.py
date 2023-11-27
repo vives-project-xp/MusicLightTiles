@@ -84,17 +84,32 @@ subscribed_topics = [
     f"{topic_prefix}/{tile}/self/command/system" for tile in selected_tiles
 ] + [
     f"{topic_prefix}/{tile}/self/state/presence" for tile in selected_tiles
-]
-
+] 
 
 for topic in subscribed_topics:
     client.subscribe(topic)
 
 # Example command for controlling the LED strip
 led_command = {
-    "brightness": 255,
-    "pixels": [{"r": 0, "g": 255, "b": 0, "w": 0}] * 12
+   "brightness": 255,
+    "pixels": [{"r": 255, "g": 255, "b": 255, "w": 255}] * 12
 }
+
+# Example commands for controlling the LED strip with different colors
+led_commands = [
+    {
+        "brightness": 255,
+        "pixels": [{"r": 255, "g": 0, "b": 0, "w": 0}] * 12  # Red
+    },
+    {
+        "brightness": 255,
+        "pixels": [{"r": 0, "g": 255, "b": 0, "w": 0}] * 12  # Green
+    },
+    {
+        "brightness": 255,
+        "pixels": [{"r": 0, "g": 0, "b": 255, "w": 0}] * 12  # Blue
+    },
+]
 
 # Example command for controlling audio
 audio_command = {
@@ -109,10 +124,20 @@ system_update_command = {
     "ping": True
 }
 
+# Send each LED command
+for tile in selected_tiles:
+    for led_command in led_commands:
+        # Send the LED command
+        send_command(tile, "light", led_command)
+        
+        # Wait for a short time before sending the next command
+        time.sleep(2)
+
+
 # Send commands and publish presence detection state for each selected tile
 for tile in selected_tiles:
     # Send the LED command
-    send_command(tile, "light", led_command)
+    # send_command(tile, "light", led_command)
 
     # Send the audio command
     send_command(tile, "audio", audio_command)
