@@ -53,7 +53,7 @@ const int uptimeInterval = 1000; // interval in milliseconds to update uptime
 
 // Define device specific constants
 const int amount_of_pixels = 12; // amount of pixels in the led strip
-const char* firmware_version = "0.0.6";
+const char* firmware_version = "0.0.7";
 const char* hardware_version = "0.0.2";
 const String sounds[] = {
   "A cat meowing",
@@ -123,6 +123,8 @@ DFRobotDFPlayerMini dfplayer;
 String device_name = "tile";
 String stateTopic = "state";
 String commandTopic = "command";
+
+int cycle = 0;
 
 bool reboot = false;
 bool ping = true;
@@ -226,20 +228,23 @@ void loop() {
     Serial.println("Unknown mode, doing nothing...");
     delay(1000); // Wait some time to prevent spamming the serial monitor with errors
   }
+  // Update cycle counter
+  cycle++;
 }
 
 // Demo setup function (setup for demo mode)
 void demo_setup() {
   // Run demo setup
   Serial.println("Running demo setup...");
-
   // Audio seettings for demo mode (these don't change while running demo mode)
   // Set sound
-  sound = "Windows XP error";
+  sound = "Mario jump";
   // Set volume
   volume = 25; // 15 = 50% volume
   // Set audio loop
-  audio_loop = true;
+  audio_loop = false;
+  // Set brightness to 100
+  brightness = 100;
 }
 
 // Demo loop function (loop for demo mode)
@@ -248,8 +253,6 @@ void demo_loop() {
   if (updatePresence()) {
     // If presence is detected
     if (presence) {
-      // Set brightness to 50
-      brightness = 50;
       // Fill all pixels with the color green
       for (int i = 0; i < amount_of_pixels; i++) {
         pixels[i].red = 0;
@@ -260,14 +263,18 @@ void demo_loop() {
       // Set audio to play
       audio_mode = 1;
     } else {
-      // Set brightness to 0 (off)
-      brightness = 0;
+      // Fill all pixels with the color green
+      for (int i = 0; i < amount_of_pixels; i++) {
+        pixels[i].red = 255;
+        pixels[i].green = 0;
+        pixels[i].blue = 0;
+        pixels[i].white = 0;
+      }
       // Set audio to stop
       audio_mode = 4;
     }
     // Update lights
     updateLights();
-
     // Update audio
     updateAudio();
   }
@@ -769,13 +776,16 @@ String getLightState() {
 bool updatePresence() {
   // Update presence
   presence = digitalRead(PRESENCE_PIN);
-  // If presence has changed
-  if (presence != previous_presence) {
-    Serial.println("Updating presence...");
-    // Update previous presence
-    previous_presence = presence;
-    // State has changed, return true
-    return true;
+  // Only check presence every 100 clock cycles (to prevent bouncing)
+  if (cycle % 100 == 0) {
+    // If presence has changed
+    if (presence != previous_presence) {
+      Serial.println("Updating presence...");
+      // Update previous presence
+      previous_presence = presence;
+      // State has changed, return true
+      return true;
+    }
   } else {
     // State hasn't changed, return false
     return false;
