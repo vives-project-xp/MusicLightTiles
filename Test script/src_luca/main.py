@@ -137,7 +137,7 @@ for tile in selected_tiles:
 # Send commands and publish presence detection state for each selected tile
 for tile in selected_tiles:
     # Send the LED command
-    # send_command(tile, "light", led_command)
+    #send_command(tile, "light", led_command)
 
     # Send the audio command
     send_command(tile, "audio", audio_command)
