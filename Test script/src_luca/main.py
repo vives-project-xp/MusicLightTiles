@@ -6,6 +6,7 @@ import paho.mqtt.client as mqtt
 from enum import Enum
 from dotenv import load_dotenv
 from tile import StateType, CmdType
+from pixel import Pixel
 from tile import Tile, CmdType, StateType
 
 # --- Global constants ---
@@ -238,11 +239,32 @@ async def main():
             break  # Exit the loop if the user enters 'exit'
     selected_tile = get_existing_tile(selected_tile_name)
     if selected_tile:
-            while True:
-                # Send commands to the selected tile
-                mqtt_send_command(mqtt_client, selected_tile, CmdType.LIGHT, selected_tile.create_light_command(brightness=255))
-                mqtt_send_command(mqtt_client, selected_tile, CmdType.AUDIO, selected_tile.create_audio_command(1, False, selected_tile.sounds[1], 100))
-                mqtt_send_command(mqtt_client, selected_tile, CmdType.SYSTEM, selected_tile.create_system_command(False, True))
+      # print the amount of pixels in the tile
+      print("Tile " + selected_tile.device_name + " has " + str(len(selected_tile.pixels)) + " pixels")
+      pixels: list[Pixel] = selected_tile.pixels
+      # Set first pixel to red
+      pixels[0].from_dict({"r": 255, "g": 0, "b": 0, "w": 0})
+      pixels[1].from_dict({"r": 0, "g": 255, "b": 0, "w": 0})
+      pixels[2].from_dict({"r": 0, "g": 0, "b": 255, "w": 0})
+      pixels[3].from_dict({"r": 0, "g": 0, "b": 255, "w": 255})
+      pixels[4].from_dict({"r": 255, "g": 255, "b": 255, "w": 255})
+      pixels[5].from_dict({"r": 255, "g": 255, "b": 0, "w": 0})
+      pixels[6].from_dict({"r": 255, "g": 0, "b": 255, "w": 0})
+      pixels[7].from_dict({"r": 255, "g": 0, "b": 0, "w": 255})
+      pixels[8].from_dict({"r": 0, "g": 255, "b": 255, "w": 0})
+      pixels[9].from_dict({"r": 0, "g": 255, "b": 0, "w": 255})
+      pixels[10].from_dict({"r": 0, "g": 0, "b": 255, "w": 255})
+      pixels[11].from_dict({"r": 255, "g": 255, "b": 255, "w": 255})
+
+
+      # Send commands to the selected tile
+      mqtt_send_command(mqtt_client, selected_tile, CmdType.LIGHT, selected_tile.create_light_command(brightness=255, pixels=pixels))
+      mqtt_send_command(mqtt_client, selected_tile, CmdType.AUDIO, selected_tile.create_audio_command(1, False, selected_tile.sounds[1], 100))
+      mqtt_send_command(mqtt_client, selected_tile, CmdType.SYSTEM, selected_tile.create_system_command(False, True))
+      # Stop sending commands after 5 seconds
+
+
+      
 
 
   # Wait for mqtt client and websocket server to finish (never)
