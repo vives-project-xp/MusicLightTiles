@@ -40,17 +40,11 @@ Zoals je ziet zijn er veel mogelijkheden met de tegel onze tegels gaat oplichten
 ## Was het op tijd?
 
 
-## Was het binnen het budget?
+## Was het binnen het budget?ok
 
 Het project is niet gemaakt binnen het budget. We konden dit project binnen het budget maken maar dan hadden we maar 1 tegel wat natuurlijk het project veel minder aantrekkelijk maakt. Nu kregen we het budget om 3 tegels waardoor je nu veel meer kan doen met het project.
 
 
-## Definitieve planning en kostenprijs
 
 
-## Definitieve planning en kosten
-##  Leveringsdata, afwijkingen en redenen
-##  Totale kosten, afwijkingen en redenen
-##  Deel algemene informatie:
-## Aanzienlijke risico's en veranderingen
 
