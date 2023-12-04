@@ -1,152 +1,254 @@
-import paho.mqtt.client as mqtt
-import json
+import os
 import time
+import asyncio
+import threading
+import paho.mqtt.client as mqtt
+from enum import Enum
+from dotenv import load_dotenv
+from tile import StateType, CmdType
+from tile import Tile, CmdType, StateType
 
-# MQTT Settings
-mqtt_broker = "mqtt.devbit.be"
-mqtt_port = 1883
-mqtt_user = None
-mqtt_password = None
-topic_prefix = "PM/MLT"
+# --- Global constants ---
+BASE_TOPIC = "PM/MLT"
+load_dotenv()
+MQTT_HOST: str = os.getenv("MQTT_SERVER")
+MQTT_PORT: int = int(os.getenv("MQTT_PORT"))
+MQTT_USER = os.getenv("MQTT_USERNAME")
+MQTT_PASS = os.getenv("MQTT_PASSWORD")
 
-# List of valid tiles
-valid_tiles = ["TILE1", "TILE2", "TILE3"]  # Add your valid tiles here
+# --- Global variables ---
+tiles: list[Tile] = [] # List of tiles
+mqtt_client: mqtt.Client = None # The mqtt client
+selected_tile_name: str = None # The name of the selected tile
 
-# Function to check if a tile exists
-def tile_exists(tile_name):
-    return tile_name in valid_tiles
+# --- Global Enums ---
+class TileListChange(Enum):
+  LIST = "list"
+  ADD = "add"
+  REMOVE = "remove"
 
-# Function to send a command to the Arduino
-def send_command(subtopic, command_type, command):
-    topic = f"{topic_prefix}/{subtopic}/self/command/{command_type}"
-    client = mqtt.Client()
-    client.username_pw_set(mqtt_user, mqtt_password)
-    client.connect(mqtt_broker, mqtt_port, 60)
+# --- Global functions ---
+def get_existing_tile(tile_name: str) -> Tile:
+  """Returns the tile with the given name, or None if it doesn't exist."""
+  # Check if tile with name exists
+  for tile in tiles:
+    if tile.device_name == tile_name:
+      return tile
+  # Tile doesn't exist yet, return None
+  return None
 
-    # Prepare the command message
-    message = json.dumps(command)
+# --- Events ---
+mqtt_client_set_event = asyncio.Event()
+# --- MQTT ---
+async def mqtt_controller(HOST: str, PORT: int, USER: str = None, PASS: str = None) -> None:
+  # Configure MQTT client
+  client = mqtt.Client(client_id="CONTROLLER", clean_session=True)
+  client = mqtt.Client(client_id="CONTROLLER", clean_session=True)
+  client.on_connect = mqtt_on_connect
+  client.on_message = mqtt_on_message
+  if USER != None and PASS != None:
+    client.username_pw_set(USER, PASS)
 
-    # Publish the command
-    client.publish(topic, message, qos=1)
+  # Connect to MQTT server
+  client.connect(HOST, PORT, 60)
 
-    # Wait for a short time to ensure the command is processed
+  # Start the MQTT client loop
+  client.loop_start()
+
+  # Set global mqtt_client variable
+  global mqtt_client
+  mqtt_client = client
+  mqtt_client_set_event.set()
+
+  # Wait for the mqtt client to finish
+  await asyncio.Future()  # run forever
+
+def mqtt_on_connect(client: mqtt.Client, userdata, flags, rc: mqtt.ReasonCodes) -> None:
+  """The callback for when the client receives a CONNACK response from the server."""
+
+  print("Connected with result code "+str(rc))
+
+  # Subscribing in on_connect() means that if we lose the connection and
+  # reconnect then subscriptions will be renewed.
+
+  # Subscribe to all the tiles (self topic)
+  print("Subscribing to all available tiles")
+  client.subscribe(BASE_TOPIC+"/+/self")
+
+def mqtt_on_message(client: mqtt.Client, userdata, msg: mqtt.MQTTMessage) -> None:
+  """The callback for when a PUBLISH message is received from the server."""
+  #convert topic and payload to string
+  topic = msg.topic
+  payload = msg.payload.decode("utf-8")
+
+  # Split the topic into parts (for easier processing)
+  topic_parts = topic.split("/")
+
+  # Check if tile with name exists
+  tile_name = topic_parts[2]
+  tile = get_tile(client, tile_name)
+
+  state_type = None
+  if selected_tile_name == None:
+
+
+
+    # Set state type (if it's a state update)
+    if topic_parts[-1] == "self":
+      state_type = StateType.ONLINE
+    elif topic_parts[-1] == "system":
+      state_type = StateType.SYSTEM
+    elif topic_parts[-1] == "audio":
+      state_type = StateType.AUDIO
+    elif topic_parts[-1] == "light":
+      state_type = StateType.LIGHT
+    elif topic_parts[-1] == "presence":
+      state_type = StateType.PRESENCE
+
+  if selected_tile_name == tile_name:
+    # Set state type (if it's a state update)
+    if topic_parts[-1] == "self":
+      state_type = StateType.ONLINE
+    elif topic_parts[-1] == "system":
+      state_type = StateType.SYSTEM
+    elif topic_parts[-1] == "audio":
+      state_type = StateType.AUDIO
+    elif topic_parts[-1] == "light":
+      state_type = StateType.LIGHT
+    elif topic_parts[-1] == "presence":
+      state_type = StateType.PRESENCE
+
+  # Process state update (if state_type has been set)
+  if state_type != None:
+    # Pass the message to the tile
+    tile.update_state(state_type, payload)
+
+def mqtt_send_command(client: mqtt.Client, tile: Tile, type: CmdType, command: str) -> None:
+  """Sends a command to the tile."""
+  # Prevent sending commands to offline tiles
+  if tile.online == False:
+    print("Tile " + tile.device_name + " is offline, can't send command")
+    return
+
+  # Send command to tile
+  if type == CmdType.SYSTEM:
+    client.publish(BASE_TOPIC+"/"+tile.device_name+"/self/command/system", command)
+  elif type == CmdType.AUDIO:
+    client.publish(BASE_TOPIC+"/"+tile.device_name+"/self/command/audio", command)
+  elif type == CmdType.LIGHT:
+    client.publish(BASE_TOPIC+"/"+tile.device_name+"/self/command/light", command)
+
+def get_tile(client: mqtt.Client, tile_name: str) -> Tile:
+  """Returns the tile with the given name, or creates a new one if it doesn't exist."""
+  # Check if tile with name exists
+  tile = get_existing_tile(tile_name)
+  if tile != None:
+    # Tile exists, return it
+    return tile
+  else:
+    # Tile doesn't exist yet, create new one
+    return create_new_tile(client, tile_name)
+
+def create_new_tile(client: mqtt.Client, tile_name: str) -> Tile:
+  """Creates a new tile with the given name."""
+  # Create new tile
+  tile = Tile(tile_name)
+  tiles.append(tile)
+  # Subscribe to the tile's state subtopics
+  client.subscribe(BASE_TOPIC+"/"+tile_name+"/self/state/+")
+  # Subscribe to the project master's command subtopics
+  client.subscribe(BASE_TOPIC+"/"+tile_name+"/command")
+  client.subscribe(BASE_TOPIC+"/"+tile_name+"/rgb")
+  client.subscribe(BASE_TOPIC+"/"+tile_name+"/effect")
+  # Get values from new tile (after 5 seconds, to give the tile time to connect or initialize)
+  # This is done so that the controller has accurate values for the tile, even if it was already online before the controller started.
+  threading.Timer(5.0, get_values_from_new_tile, [client, tile]).start()
+  # Return the new tile
+  return tile
+
+def get_event_loop() -> asyncio.AbstractEventLoop:
+  """Returns the event loop for the current thread."""
+  try:
+    loop = asyncio.get_event_loop()
+  except RuntimeError:
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+  return loop
+
+def get_values_from_new_tile(client: mqtt.Client, tile: Tile) -> None:
+  """Sends commands to the tile to get the current values.
+
+  Used to get missing values if a tile was already online before the controller started."""
+  if tile.online == False:
+    # Tile is offline, do nothing
+    return
+  # Get system values
+  while tile.firmware_version == "" or tile.hardware_version == "" or tile.sounds == []:
+    # Send command to tile to get system state
+    mqtt_send_command(mqtt_client, tile, CmdType.SYSTEM, tile.create_system_command(False, True))
+    # Wait for 2 second (because ping is every second)
     time.sleep(2)
+  # Turn off the ping state of the tile (to show that it's connected)
+  mqtt_send_command(mqtt_client, tile, CmdType.SYSTEM, tile.create_system_command(False, False))
+  print("Got system values from tile " + tile.device_name)
+  # Get audio values
+  while tile.audio_sound == "":
+    # Send command to tile to get audio state
+    mqtt_send_command(mqtt_client, tile, CmdType.AUDIO, tile.create_audio_command(1, False, tile.sounds[0], 0))
+    # Wait for 1 second
+    time.sleep(1)
+  # Set audio mode to 4 (stop audio)
+  mqtt_send_command(mqtt_client, tile, CmdType.AUDIO, tile.create_audio_command(4))
+  print("Got audio values from tile " + tile.device_name)
+  # Get light values
+  while tile.pixels == []:
+    # Send command to tile to get light state
+    mqtt_send_command(mqtt_client, tile, CmdType.LIGHT, tile.create_light_command(brightness=255))
+    # Wait for 1 second
+    time.sleep(1)
+  # Set brightness back to 0 (to turn off the lights)
+  mqtt_send_command(mqtt_client, tile, CmdType.LIGHT, tile.create_light_command(brightness=0))
+  print("Got light values from tile " + tile.device_name)
 
-    # Disconnect from the broker
-    client.disconnect()
+# --- Main ---
+async def main():
+  # Start the mqtt client
+  print("Starting MQTT client")
+  mqtt_task = asyncio.create_task(mqtt_controller(MQTT_HOST, MQTT_PORT))
 
-# Function to publish presence state
-def publish_presence_state(detected, subtopic):
-    topic = f"{topic_prefix}/{subtopic}/self/state/presence"
-    client = mqtt.Client()
-    client.username_pw_set(mqtt_user, mqtt_password)
-    client.connect(mqtt_broker, mqtt_port, 60)
+  # Wait till the mqtt_client is set
+  await mqtt_client_set_event.wait()
 
-    # Prepare the presence message
-    presence_state = {"detected": detected}
-    message = json.dumps(presence_state)
+  # Wait for MQTT client to connect
+  while mqtt_client.is_connected() == False:
+    print("Waiting for MQTT client to connect")
+    await asyncio.sleep(1)
+  
+  # Wait for tiles to be discovered
+  await asyncio.sleep(10)
 
-    # Publish the presence state
-    client.publish(topic, message, qos=1)
-
-    # Disconnect from the broker
-    client.disconnect()
-
-# MQTT Callbacks
-def on_message(client, userdata, msg):
-    topic = msg.topic
-    payload = json.loads(msg.payload.decode("utf-8"))
-
-    print(f"Received message on topic: {topic}")
-    print(f"Payload: {payload}")
-
-# Set up MQTT client
-client = mqtt.Client()
-client.username_pw_set(mqtt_user, mqtt_password)
-client.on_message = on_message
-client.connect(mqtt_broker, mqtt_port, 60)
-
-# User input to choose multiple tiles
-selected_tiles = input("Enter the tile names (comma-separated, e.g., TILE1,TILE2): ").split(',')
-
-# Check if all tiles exist
-invalid_tiles = [tile for tile in selected_tiles if not tile_exists(tile)]
-if invalid_tiles:
-    print(f"Error: Tiles {', '.join(invalid_tiles)} do not exist.")
-    exit()
-
-# Subscribe to command topics for the selected tiles
-subscribed_topics = [
-    f"{topic_prefix}/{tile}/self/command/audio" for tile in selected_tiles
-] + [
-    f"{topic_prefix}/{tile}/self/command/light" for tile in selected_tiles
-] + [
-    f"{topic_prefix}/{tile}/self/command/system" for tile in selected_tiles
-] + [
-    f"{topic_prefix}/{tile}/self/state/presence" for tile in selected_tiles
-] 
-
-for topic in subscribed_topics:
-    client.subscribe(topic)
-
-# Example command for controlling the LED strip
-led_command = {
-   "brightness": 255,
-    "pixels": [{"r": 255, "g": 255, "b": 255, "w": 255}] * 12
-}
-
-# Example commands for controlling the LED strip with different colors
-led_commands = [
-    {
-        "brightness": 255,
-        "pixels": [{"r": 255, "g": 0, "b": 0, "w": 0}] * 12  # Red
-    },
-    {
-        "brightness": 255,
-        "pixels": [{"r": 0, "g": 255, "b": 0, "w": 0}] * 12  # Green
-    },
-    {
-        "brightness": 255,
-        "pixels": [{"r": 0, "g": 0, "b": 255, "w": 0}] * 12  # Blue
-    },
-]
-
-# Example command for controlling audio
-audio_command = {
-    "state": 1,
-    "looping": True,
-    "sound": "Mario jump",
-    "volume": 50
-}
-
-system_update_command = {
-    "reboot": False,
-    "ping": True
-}
-
-# Send each LED command
-for tile in selected_tiles:
-    for led_command in led_commands:
-        # Send the LED command
-        send_command(tile, "light", led_command)
-        
-        # Wait for a short time before sending the next command
-        time.sleep(2)
+  # Display available tiles
+  print("Available tiles:")
+  for tile in tiles:
+    print(tile.device_name)
+  while True: 
+    # User can select tile
+    selected_tile_name = input("Enter the name of the tile you want to control (or 'exit' to quit): ")
+    if selected_tile_name.lower() == 'exit':
+            break  # Exit the loop if the user enters 'exit'
+    selected_tile = get_existing_tile(selected_tile_name)
+    if selected_tile:
+            while True:
+                # Send commands to the selected tile
+                mqtt_send_command(mqtt_client, selected_tile, CmdType.LIGHT, selected_tile.create_light_command(brightness=255))
+                mqtt_send_command(mqtt_client, selected_tile, CmdType.AUDIO, selected_tile.create_audio_command(1, False, selected_tile.sounds[1], 100))
+                mqtt_send_command(mqtt_client, selected_tile, CmdType.SYSTEM, selected_tile.create_system_command(False, True))
 
 
-# Send commands and publish presence detection state for each selected tile
-for tile in selected_tiles:
-    # Send the LED command
-    #send_command(tile, "light", led_command)
+  # Wait for mqtt client and websocket server to finish (never)
+  await mqtt_task
 
-    # Send the audio command
-    send_command(tile, "audio", audio_command)
-
-    # Send the system update command
-    send_command(tile, "system", system_update_command)
-
-    # Publish presence detection state
-    publish_presence_state(detected=True, subtopic=tile)
-
-# Loop to listen for messages
-client.loop_forever()
+# Run the main function
+if __name__== "__main__":
+  # Run the main function
+  asyncio.run(main())
