@@ -240,9 +240,9 @@ void demo_setup() {
   // Set sound
   sound = "Mario jump";
   // Set volume
-  volume = 25; // 15 = 50% volume
+  volume = 30; // 15 = 50% volume
   // Set audio loop
-  audio_loop = false;
+  audio_loop = true;
   // Set brightness to 100
   brightness = 100;
 }
@@ -731,6 +731,11 @@ bool updateLights() {
   // If brightness has changed or pixel colors have changed (value in pixels is different from previous value in pixels)
   if (brightness != previous_brightness || memcmp(pixels, previous_pixels, sizeof(pixels)) != 0) {
 
+    // Wait for led strip to be ready
+    while (!ledstrip.canShow()) {
+      delay(0.0000125);
+    }
+
     Serial.println("Updating lights...");
     // Set brightness to new value
     ledstrip.setBrightness(brightness);
@@ -774,10 +779,10 @@ String getLightState() {
 
 // Update presence function
 bool updatePresence() {
-  // Update presence
-  presence = digitalRead(PRESENCE_PIN);
-  // Only check presence every 100 clock cycles (to prevent bouncing)
-  if (cycle % 100 == 0) {
+  // Only check presence every 20 clock cycles (to prevent bouncing)
+  if (cycle % 20 == 0) {
+    // Update presence
+    presence = digitalRead(PRESENCE_PIN);
     // If presence has changed
     if (presence != previous_presence) {
       Serial.println("Updating presence...");
@@ -786,10 +791,9 @@ bool updatePresence() {
       // State has changed, return true
       return true;
     }
-  } else {
-    // State hasn't changed, return false
-    return false;
-  }
+  } 
+  // State hasn't changed, return false
+  return false;
 }
 
 // Get presence state function (returns presence state as JSON)
