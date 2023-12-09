@@ -230,7 +230,7 @@ def get_values_from_new_tile(client: mqtt.Client, tile: Tile) -> None:
   logging.info("Got light values from tile " + tile.device_name)
 
 # --- Websocket ---
-async def ws_server(HOST: str = "localhost", PORT: int = WEBSOCKET_PORT) -> None:
+async def ws_server(HOST: str = "0.0.0.0", PORT: int = WEBSOCKET_PORT) -> None:
   """Starts the websocket server."""
   # Start the websocket server
   async with serve(ws_handler, HOST, PORT):
