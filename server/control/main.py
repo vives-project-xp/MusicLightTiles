@@ -2,22 +2,23 @@ import os
 import json
 import time
 import asyncio
+import logging
 import threading
 import paho.mqtt.client as mqtt
 from enum import Enum
 from pixel import Pixel
-from dotenv import load_dotenv
 from tile import StateType, CmdType
 from tile import Tile, CmdType, StateType
 from websockets.server import serve, WebSocketServerProtocol
 
 # --- Global constants ---
 BASE_TOPIC = "PM/MLT"
-load_dotenv()
 MQTT_HOST: str = os.getenv("MQTT_SERVER")
 MQTT_PORT: int = int(os.getenv("MQTT_PORT"))
 MQTT_USER = os.getenv("MQTT_USERNAME")
 MQTT_PASS = os.getenv("MQTT_PASSWORD")
+LOGGING_LEVEL = logging.INFO
+WEBSOCKET_PORT: int = 3000
 
 # --- Global variables ---
 tiles: list[Tile] = [] # List of tiles
@@ -40,6 +41,11 @@ def get_existing_tile(tile_name: str) -> Tile:
       return tile
   # Tile doesn't exist yet, return None
   return None
+
+# --- Configure logging ---
+logging.basicConfig(level=LOGGING_LEVEL)
+logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+logging.getLogger("tile").setLevel(logging.INFO)
 
 # --- Events ---
 mqtt_client_set_event = asyncio.Event()
@@ -71,13 +77,13 @@ async def mqtt_controller(HOST: str, PORT: int, USER: str = None, PASS: str = No
 def mqtt_on_connect(client: mqtt.Client, userdata, flags, rc: mqtt.ReasonCodes) -> None:
   """The callback for when the client receives a CONNACK response from the server."""
 
-  print("Connected with result code "+str(rc))
+  logging.info("Connected with result code "+str(rc))
 
   # Subscribing in on_connect() means that if we lose the connection and
   # reconnect then subscriptions will be renewed.
 
   # Subscribe to all the tiles (self topic)
-  print("Subscribing to all available tiles")
+  logging.info("Subscribing to all available tiles")
   client.subscribe(BASE_TOPIC+"/+/self")
 
 def mqtt_on_message(client: mqtt.Client, userdata, msg: mqtt.MQTTMessage) -> None:
@@ -133,7 +139,7 @@ def mqtt_send_command(client: mqtt.Client, tile: Tile, type: CmdType, command: s
   """Sends a command to the tile."""
   # Prevent sending commands to offline tiles
   if tile.online == False:
-    print("Tile " + tile.device_name + " is offline, can't send command")
+    logging.warning("Tile " + tile.device_name + " is offline, can't send command")
     return
 
   # Send command to tile
@@ -203,7 +209,7 @@ def get_values_from_new_tile(client: mqtt.Client, tile: Tile) -> None:
     time.sleep(2)
   # Turn off the ping state of the tile (to show that it's connected)
   mqtt_send_command(mqtt_client, tile, CmdType.SYSTEM, tile.create_system_command(False, False))
-  print("Got system values from tile " + tile.device_name)
+  logging.info("Got system values from tile " + tile.device_name)
   # Get audio values
   while tile.audio_sound == "":
     # Send command to tile to get audio state
@@ -212,7 +218,7 @@ def get_values_from_new_tile(client: mqtt.Client, tile: Tile) -> None:
     time.sleep(1)
   # Set audio mode to 4 (stop audio)
   mqtt_send_command(mqtt_client, tile, CmdType.AUDIO, tile.create_audio_command(4))
-  print("Got audio values from tile " + tile.device_name)
+  logging.info("Got audio values from tile " + tile.device_name)
   # Get light values
   while tile.pixels == []:
     # Send command to tile to get light state
@@ -221,10 +227,10 @@ def get_values_from_new_tile(client: mqtt.Client, tile: Tile) -> None:
     time.sleep(1)
   # Set brightness back to 0 (to turn off the lights)
   mqtt_send_command(mqtt_client, tile, CmdType.LIGHT, tile.create_light_command(brightness=0))
-  print("Got light values from tile " + tile.device_name)
+  logging.info("Got light values from tile " + tile.device_name)
 
 # --- Websocket ---
-async def ws_server(HOST: str = "localhost", PORT: int = 3000) -> None:
+async def ws_server(HOST: str = "localhost", PORT: int = WEBSOCKET_PORT) -> None:
   """Starts the websocket server."""
   # Start the websocket server
   async with serve(ws_handler, HOST, PORT):
@@ -250,13 +256,13 @@ async def ws_handler(websocket: WebSocketServerProtocol, path: str):
         await ws_command(websocket, message_json)
       else:
         # Unknown action, do nothing
-        print("Unknown action: " + action)
+        logging.warning("Unknown action: " + action)
   except Exception as e:
-    # Print error
-    print(e)
+    # Something went wrong, log the error
+    logging.error(e)
   finally:
     # Client disconnected, remove websocket from all channels
-    print("Websocket: " + str(websocket) + " disconnected")
+    logging.info("Websocket: " + str(websocket) + " disconnected")
     if websocket in channel_tiles:
       channel_tiles.remove(websocket)
     for tile_name in channel_states:
@@ -274,10 +280,10 @@ async def ws_subscribe(websocket: WebSocketServerProtocol, message_json: dict) -
       await ws_send_tile_list_changes(websocket, tiles, TileListChange.LIST)
       # Add websocket to 'tiles' channel
       channel_tiles.append(websocket)
-      print("Websocket: " + str(websocket) + " subscribed to tile list")
+      logging.info("Websocket: " + str(websocket) + " subscribed to tile list")
     else:
       # Websocket is already in list, do nothing
-      print("Websocket: " + str(websocket) + " tried to subscribe to tile list, but it was already subscribed")
+      logging.warning("Websocket: " + str(websocket) + " tried to subscribe to tile list, but it was already subscribed")
 
   elif type == "state":
     subscribe_tiles = list(map(str, message_json["tiles"]))
@@ -287,7 +293,7 @@ async def ws_subscribe(websocket: WebSocketServerProtocol, message_json: dict) -
       tile = get_existing_tile(tile_name)
       if tile is None:
         # Tile doesn't exist, do nothing
-        print("Websocket: " + str(websocket) + " tried to subscribe to state of tile " + tile_name + ", but it doesn't exist")
+        logging.warning("Websocket: " + str(websocket) + " tried to subscribe to state of tile " + tile_name + ", but it doesn't exist")
         continue
       # Check if websocket is not already in list
       if websocket not in channel_states[tile_name]:
@@ -295,10 +301,10 @@ async def ws_subscribe(websocket: WebSocketServerProtocol, message_json: dict) -
         await ws_send_tile_state(websocket, tile, StateType.FULL)
         # Add websocket to tile_name's state channel
         channel_states[tile_name].append(websocket)
-        print("Websocket: " + str(websocket) + " subscribed to state of tile " + tile_name)
+        logging.info("Websocket: " + str(websocket) + " subscribed to state of tile " + tile_name)
       else:
         # Websocket is already in list, do nothing
-        print("Websocket: " + str(websocket) + " tried to subscribe to state of tile " + tile_name + ", but it was already subscribed")
+        logging.warning("Websocket: " + str(websocket) + " tried to subscribe to state of tile " + tile_name + ", but it was already subscribed")
 
 async def ws_unsubscribe(websocket: WebSocketServerProtocol, message_json: dict) -> None:
   """Unsubscribes the websocket from the given channels."""
@@ -309,10 +315,10 @@ async def ws_unsubscribe(websocket: WebSocketServerProtocol, message_json: dict)
     if websocket in channel_tiles:
       # remove websocket from 'tiles' channel
       channel_tiles.remove(websocket)
-      print("Websocket: " + str(websocket) + " unsubscribed from tile list")
+      logging.info("Websocket: " + str(websocket) + " unsubscribed from tile list")
     else:
       # Websocket is not in list, do nothing
-      print("Websocket: " + str(websocket) + " tried to unsubscribe from tile list, but it wasn't subscribed")
+      logging.warning("Websocket: " + str(websocket) + " tried to unsubscribe from tile list, but it wasn't subscribed")
   
   elif type == "state":
     unsubscribe_tiles = list(map(str, message_json["tiles"]))
@@ -322,13 +328,13 @@ async def ws_unsubscribe(websocket: WebSocketServerProtocol, message_json: dict)
         if websocket in channel_states[tile_name]:
           # remove websocket from tile_name's state channel
           channel_states[tile_name].remove(websocket)
-          print("Websocket: " + str(websocket) + " unsubscribed from state of tile " + tile_name)
+          logging.info("Websocket: " + str(websocket) + " unsubscribed from state of tile " + tile_name)
         else:
           # Websocket is not in list, do nothing
-          print("Websocket: " + str(websocket) + " tried to unsubscribe from state of tile " + tile_name + ", but it wasn't subscribed")
+          logging.warning("Websocket: " + str(websocket) + " tried to unsubscribe from state of tile " + tile_name + ", but it wasn't subscribed")
       except:
         # Tile doesn't exist, do nothing
-        print("Websocket: " + str(websocket) + " tried to unsubscribe from state of tile " + tile_name + ", but it doesn't exist")
+        logging.warning("Websocket: " + str(websocket) + " tried to unsubscribe from state of tile " + tile_name + ", but it doesn't exist")
         continue
 
 async def ws_command(websocket: WebSocketServerProtocol, message_json: dict) -> None:
@@ -347,7 +353,7 @@ async def ws_command(websocket: WebSocketServerProtocol, message_json: dict) -> 
         tile = get_existing_tile(tile_name)
         if tile is None:
           # Tile doesn't exist, do nothing
-          print("Tile " + tile_name + " doesn't exist")
+          logging.warning("Websocket: " + str(websocket) + " tried to send system command to tile " + tile_name + ", but it doesn't exist")
           continue
         # Send command to tile
         mqtt_send_command(mqtt_client, tile, CmdType.SYSTEM, tile.create_system_command(reboot, ping))
@@ -363,7 +369,7 @@ async def ws_command(websocket: WebSocketServerProtocol, message_json: dict) -> 
         tile = get_existing_tile(tile_name)
         if tile is None:
           # Tile doesn't exist, do nothing
-          print("Tile " + tile_name + " doesn't exist")
+          logging.warning("Websocket: " + str(websocket) + " tried to send audio command to tile " + tile_name + ", but it doesn't exist")
           continue
         # Send command to tile
         mqtt_send_command(mqtt_client, tile, CmdType.AUDIO, tile.create_audio_command(mode, loop, sound, volume))
@@ -381,14 +387,14 @@ async def ws_command(websocket: WebSocketServerProtocol, message_json: dict) -> 
         tile = get_existing_tile(tile_name)
         if tile is None:
           # Tile doesn't exist, do nothing
-          print("Tile " + tile_name + " doesn't exist")
+          logging.warning("Websocket: " + str(websocket) + " tried to send light command to tile " + tile_name + ", but it doesn't exist")
           continue
         # Send command to tile
         mqtt_send_command(mqtt_client, tile, CmdType.LIGHT, tile.create_light_command(brightness, pixels))
 
     case _:
       # Unknown command type, do nothing
-      print("Websocket: " + str(websocket) + " tried to send unknown command type: " + type + " to tiles: " + str(tiles_to_command))
+      logging.warning("Websocket: " + str(websocket) + " tried to send unknown command type: " + type + " to tiles: " + str(tiles_to_command))
 
 async def ws_send_tile_state(websocket: WebSocketServerProtocol, tile: Tile, type: StateType) -> None:
   """Sends the state of the given tile to the websocket."""
@@ -406,7 +412,7 @@ async def ws_send_tile_list_changes(websocket: WebSocketServerProtocol, tiles: l
   """Sends a list of tiles to the websocket, with the given change type."""
   # Check if tiles is not empty
   if len(tiles) == 0:
-    print("Tried to send empty list of tiles to websocket: " + str(websocket))
+    logging.warning("Tried to send empty list of tiles to websocket: " + str(websocket))
     return
   # Create formatted list of tiles (json)
   responds = {
@@ -433,7 +439,7 @@ def process_pm_command(pm_command_type, tile: Tile, payload):
     process_pm_effect_command(tile, payload)
   else:
     # Unknown command type, do nothing
-    print("Unknown project master command type: " + pm_command_type)
+    logging.warning("Unknown project master command type: " + pm_command_type)
 
 def process_pm_command_command(tile: Tile, payload: str):
   if payload == "ON":
@@ -448,7 +454,7 @@ def process_pm_command_command(tile: Tile, payload: str):
     mqtt_send_command(mqtt_client, tile, CmdType.AUDIO, tile.create_audio_command(mode=4))
   else:
     # Unknown command, do nothing
-    print("Received unknown command command from project master: " + payload)
+    logging.warning("Received unknown command command from project master: " + payload)
 
 def process_pm_rgb_command(tile: Tile, payload: str):
   # Recieved message 'r,g,b' from project master
@@ -467,7 +473,7 @@ def process_pm_rgb_command(tile: Tile, payload: str):
     mqtt_send_command(mqtt_client, tile, CmdType.LIGHT, tile.create_light_command(pixels=pixels))
   except:
     # Unknown command, do nothing
-    print("Received unknown rgb command from project master: " + payload)
+    logging.warning("Received unknown rgb command from project master: " + payload)
 
 def process_pm_effect_command(tile: Tile, payload):
   # This project does not have any effects at this time.
@@ -476,14 +482,14 @@ def process_pm_effect_command(tile: Tile, payload):
 # --- Main ---
 async def main():
   # Start the mqtt client
-  print("Starting MQTT client")
+  logging.info("Starting MQTT client")
   mqtt_task = asyncio.create_task(mqtt_controller(MQTT_HOST, MQTT_PORT))
 
   # Wait till the mqtt_client is set
   await mqtt_client_set_event.wait()
 
   # Start the websocket server 
-  print("Starting websocket server")
+  logging.info("Starting websocket server")
   ws_task = asyncio.create_task(ws_server())
 
   # Wait for mqtt client and websocket server to finish (never)

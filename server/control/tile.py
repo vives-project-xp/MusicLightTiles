@@ -1,6 +1,13 @@
 from pixel import Pixel
 from enum import Enum
 import json
+import logging
+
+# --- Configure Logging ---
+# Create a logger
+logger = logging.getLogger(__name__)
+# Set the logger level
+logger.setLevel(logging.DEBUG)
 
 class CmdType(Enum):
   SYSTEM = "system"
@@ -18,7 +25,7 @@ class StateType(Enum):
 class Tile:
   # Constructor
   def __init__(self, device_name: str):
-    print("Tile " + device_name + " created")
+    logger.info("Tile " + device_name + " created")
     self.device_name: str = device_name
     self._online: bool = False
     self._firmware_version: str = ""
@@ -102,20 +109,21 @@ class Tile:
       case StateType.PRESENCE:
         self.update_presence_state(state)
       case _:
-        print("Invalid state type")
+        logger.error("Invalid state type")
 
   def update_online_state(self, state: str) -> None:
     """Set the self state of the tile from a JSON string"""
     if state == "ONLINE":
       self._online = True
-      print("Tile " + self.device_name + " is online")
+      logger.info("Tile " + self.device_name + " is online")
     elif state == "OFFLINE":
       self._online = False
-      print("Tile " + self.device_name + " is offline")
+      logger.info("Tile " + self.device_name + " is offline")
     else:
       # Invalid device state, ignore
+      logger.warning("Tile " + self.device_name + " has invalid online state: " + state)
       return
-    print("Tile " + self.device_name + " online state updated")
+    logger.info("Tile " + self.device_name + " online state updated")
 
   def update_system_state(self, state: str) -> None:
     """Set the system state of the tile from a JSON string"""
@@ -132,7 +140,7 @@ class Tile:
       # Invalid JSON string (missing keys, wrong types, etc.)
       pass
     else:
-      print("Tile " + self.device_name + " system state updated")
+      logger.info("Tile " + self.device_name + " system state updated")
 
   def update_audio_state(self, state: str) -> None:
     """Set the audio state of the tile from a JSON string"""
@@ -148,7 +156,7 @@ class Tile:
       # Invalid JSON string (missing keys, wrong types, etc.)
       pass
     else:
-      print("Tile " + self.device_name + " audio state updated")
+      logger.info("Tile " + self.device_name + " audio state updated")
 
   def update_light_state(self, state: str) -> None:
     """Set the light state of the tile from a JSON string"""
@@ -171,7 +179,7 @@ class Tile:
       # Invalid JSON string (missing keys, wrong types, etc.)
       pass
     else:
-      print("Tile " + self.device_name + " light state updated")
+      logger.info("Tile " + self.device_name + " light state updated")
 
   def update_presence_state(self, state: str) -> None:
     """Set the presence state of the tile from a JSON string"""
@@ -184,7 +192,7 @@ class Tile:
       # Invalid JSON string (missing keys, wrong types, etc.)
       pass
     else:
-      print("Tile " + self.device_name + " presence state updated")
+      logger.info("Tile " + self.device_name + " presence state updated")
   
   def get_state(self, state_type: StateType) -> dict:
     """Get the state of the tile as a dictionary"""
@@ -202,7 +210,7 @@ class Tile:
       case StateType.FULL:
         return self.get_full_state()
       case _:
-        print("Invalid state type")
+        logger.error("Invalid state type")
         return ""
   
   def get_online_state(self) -> dict:
