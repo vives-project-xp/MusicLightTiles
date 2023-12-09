@@ -9,7 +9,7 @@ ENV MQTT_PASSWORD=$MQTT_PASSWORD
 # COPY all the files to the container
 COPY . .
 # Install the dependencies
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 # EXPOSE port 3000 for websocket connection
 EXPOSE 3000
 # Run main.py when the container launches

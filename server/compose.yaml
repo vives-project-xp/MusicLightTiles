@@ -8,21 +8,9 @@ services:
       - ./control:/code
     env_file:
       - .env
-    networks:
-      - backend
   command:
     container_name: command
     build: ./command_prod
     ports:
       - "8080:80"
-    networks:
-      - frontend
-      - backend
 
-networks:
-  backend:
-    name: MLT-Backend
-    driver: bridge
-  frontend:
-    name: MLT-Frontend
-    driver: bridge

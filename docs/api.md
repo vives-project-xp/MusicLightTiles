@@ -227,7 +227,26 @@ __Example of a `light` command:__
 ## Server Actions (server -> client)
 
 The server actions are sent by the control server to the client.
-There are 2 actions the server can perform:
+There are 3 actions the server can perform:
+
+### Welcome
+
+This action is used to send a welcome message to new clients.
+When the client connects to the control server, the control server will send a welcome message to the client.
+
+__The `welcome` action has the following properties:__
+
+| Property | Type | Description |
+| -------- | ---- | ----------- |
+| `action` | String | The action to perform. In this case, `welcome`. |
+
+__Example of a `welcome` action:__
+
+```json
+{
+  "action": "welcome"
+}
+```
 
 ### Tiles
 

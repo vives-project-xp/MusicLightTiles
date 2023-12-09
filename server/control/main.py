@@ -239,6 +239,9 @@ async def ws_server(HOST: str = "localhost", PORT: int = WEBSOCKET_PORT) -> None
 async def ws_handler(websocket: WebSocketServerProtocol, path: str):
   """Handles incoming websocket connections."""
   try:
+    # If new websocket connects, send welcome message
+    logging.info("Websocket: " + str(websocket) + " connected")
+    await websocket.send(json.dumps({"action": "welcome"}, indent=4))
     # Handle incoming messages
     async for message in websocket:
       # Convert message to JSON

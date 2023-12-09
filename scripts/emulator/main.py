@@ -22,7 +22,6 @@ def random_presence_detection(tile: Tile, stop_event: multiprocessing.Event) -> 
 
 def create_and_run_tile(name: str, stop_event: multiprocessing.Event, random_presence: bool = False) -> None:
   """Creates a tile and runs it until the stop_event is set."""
-  # TODO: Add random presence detection
   tile = Tile(name)
 
   if random_presence:
