@@ -1,7 +1,9 @@
 services:
   control:
     container_name: control
-    build: ./control
+    build: 
+      context: ./control
+      dockerfile: Dockerfile
     ports:
       - "3000:3000"
     volumes:
@@ -10,7 +12,9 @@ services:
       - .env
   command:
     container_name: command
-    build: ./command_prod
+    build: 
+      context: ./command_prod
+      dockerfile: Dockerfile
     ports:
       - "8080:80"
 
