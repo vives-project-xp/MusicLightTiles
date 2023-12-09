@@ -1,15 +1,17 @@
+import 'package:command/providers/websocket_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../models/tile_model.dart';
+import '../classes/tile.dart';
+import '../classes/pixel.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<TileModel>(
+    return Consumer<WebSocketProvider>(
       builder: (context, tileModel, child) {
         return Scaffold(
           appBar: AppBar(
@@ -45,23 +47,6 @@ class HomePage extends StatelessWidget {
                   child: Text('There are no tiles yet.'),
                 ),
               ),
-          floatingActionButton: FloatingActionButton(
-            onPressed: () {
-              // Create a new tile
-              Tile tile = Tile('${tileModel.tiles.length + 1}');
-              // Set tile online
-              tile.online = true;
-              // Set tile pixels
-              for (int i = 0; i < 12; i++) {
-                tile.pixels.add(Pixel());
-              }
-              // Add tile to tile model
-              tileModel.addTile(tile);
-
-            },
-            tooltip: 'Add Tile',
-            child: const Icon(Icons.add),
-          ),
         );
       }
     );

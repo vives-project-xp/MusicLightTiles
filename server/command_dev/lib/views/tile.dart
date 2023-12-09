@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../models/tile_model.dart';
+import '../classes/tile.dart';
 
 class TilePage extends StatelessWidget {
   const TilePage({super.key, required this.tile});
