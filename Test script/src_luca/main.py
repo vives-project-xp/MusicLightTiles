@@ -287,24 +287,29 @@ async def main():
                 answer = input()
                 if answer == "n":
                   break
+      time.sleep(1)
+      # Send light commands
       if answer == "y":
             send_and_check_command(selected_tile, {"r": 255, "g": 0, "b": 0, "w": 0}, confirmation_message="Was pixels_red command sent successfully? (y/n)")
       else:
             break
+      time.sleep(1)
       if answer == "y":
             send_and_check_command(selected_tile, {"r": 0, "g": 255, "b": 0, "w": 0}, confirmation_message="Was pixels_green command sent successfully? (y/n)")
       else:
             break
+      time.sleep(1)
       if answer == "y":
             send_and_check_command(selected_tile, {"r": 0, "g": 0, "b": 255, "w": 0}, confirmation_message="Was pixels_blue command sent successfully? (y/n)")
       else:
             break
-
+      time.sleep(1)
       if answer == "y":
             send_and_check_command(selected_tile, {"r": 0, "g": 0, "b": 0, "w": 255}, confirmation_message="Was pixels_white command sent successfully? (y/n)")
       else:
             break
-        # Command so all LEDs go off but without send_and_check_command
+      time.sleep(1)
+      # Command so all LEDs go off but without send_and_check_command
       mqtt_send_command(mqtt_client, selected_tile, CmdType.LIGHT, selected_tile.create_light_command(brightness=0))
 
 # Run the main function
