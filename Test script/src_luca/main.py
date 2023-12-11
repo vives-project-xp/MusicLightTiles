@@ -136,6 +136,21 @@ def mqtt_send_command(client: mqtt.Client, tile: Tile, type: CmdType, command: s
   elif type == CmdType.LIGHT:
     client.publish(BASE_TOPIC+"/"+tile.device_name+"/self/command/light", command)
 
+def set_pixels_and_send_command(selected_tile, color_dict, brightness=125):
+    for pixel in selected_tile.pixels:
+        pixel.from_dict(color_dict)
+
+    mqtt_send_command(
+        mqtt_client,
+        selected_tile,
+        CmdType.LIGHT,
+        selected_tile.create_light_command(brightness=brightness, pixels=selected_tile.pixels)
+    )
+
+def send_and_check_command(selected_tile, color_dict, brightness=225, confirmation_message="Was command sent successfully? (y/n)"):
+    set_pixels_and_send_command(selected_tile, color_dict, brightness)
+    
+
 def get_tile(client: mqtt.Client, tile_name: str) -> Tile:
   """Returns the tile with the given name, or creates a new one if it doesn't exist."""
   # Check if tile with name exists
@@ -245,172 +260,57 @@ async def main():
     if selected_tile:
       # print the amount of pixels in the tile
       print("Tile " + selected_tile.device_name + " has " + str(len(selected_tile.pixels)) + " pixels")
-      # Create a list of pixels
-      pixels: list[Pixel] = selected_tile.pixels
-      # Set all pixels to red
-      for pixel in pixels:
-        pixel.from_dict({"r": 255, "g": 0, "b": 0, "w": 0})
-      # Send commands to the selected tile
-      mqtt_send_command(mqtt_client, selected_tile, CmdType.LIGHT, selected_tile.create_light_command(brightness=255, pixels=pixels))
-      # Check if the pixels_red command has been sent. Ask the user if it was sent successfully.
-      pixels_red_command_sent = False
-      while pixels_red_command_sent == False:
-        # Wait for 1 second
-        time.sleep(1)
-        # Check if pixels_red command has been sent
-        if selected_tile.pixels == pixels:
-          pixels_red_command_sent = True
-          print("Was pixels_red command sent successfully? (y/n)")
-          answer = input()
-          if answer == "n":
-            break
-          else:
-            # Send command to tile to get light state
-            mqtt_send_command(mqtt_client, selected_tile, CmdType.LIGHT, selected_tile.create_light_command(brightness=255, pixels=pixels))
-      mqtt_send_command(mqtt_client, selected_tile, CmdType.AUDIO, selected_tile.create_audio_command(1, False, selected_tile.sounds[1], 100))
+      mqtt_send_command(mqtt_client, selected_tile, CmdType.AUDIO, selected_tile.create_audio_command(1, False, selected_tile.sounds[3], 100))
       # Check if audio command has been sent. Ask the user if it was sent successfully
       audio_command_sent = False
       while audio_command_sent == False:
         # Wait for 1 second
         time.sleep(1)
         # Check if audio command has been sent
-        if selected_tile.audio_sound == selected_tile.sounds[1] and selected_tile.audio_volume == 100:
+        if selected_tile.audio_sound == selected_tile.sounds[3] and selected_tile.audio_volume == 100:
           audio_command_sent = True
           print("Was audio command sent successfully? (y/n)")
           answer = input()
           if answer == "n":
             break
-          else:
-            # Send command to tile to get audio state
-            mqtt_send_command(mqtt_client, selected_tile, CmdType.AUDIO, selected_tile.create_audio_command(1, False, selected_tile.sounds[1], 100))
-      mqtt_send_command(mqtt_client, selected_tile, CmdType.SYSTEM, selected_tile.create_system_command(False, True))
-  
-  """"
-      # Create a list of pixels with the same amount of pixels as the selected tile
-      pixels_red: list[Pixel] = selected_tile.pixels
-      # Set first pixel to red
-      pixels_red[0].from_dict({"r": 255, "g": 0, "b": 0, "w": 0})
-      pixels_red[1].from_dict({"r": 255, "g": 0, "b": 0, "w": 0})
-      pixels_red[2].from_dict({"r": 255, "g": 0, "b": 0, "w": 0})
-      pixels_red[3].from_dict({"r": 255, "g": 0, "b": 0, "w": 0})
-      pixels_red[4].from_dict({"r": 255, "g": 0, "b": 0, "w": 0})
-      pixels_red[5].from_dict({"r": 255, "g": 0, "b": 0, "w": 0})
-      pixels_red[6].from_dict({"r": 255, "g": 0, "b": 0, "w": 0})
-      pixels_red[7].from_dict({"r": 255, "g": 0, "b": 0, "w": 0})
-      pixels_red[8].from_dict({"r": 255, "g": 0, "b": 0, "w": 0})
-      pixels_red[9].from_dict({"r": 255, "g": 0, "b": 0, "w": 0})
-      pixels_red[10].from_dict({"r": 255, "g": 0, "b": 0, "w": 0})
-      pixels_red[11].from_dict({"r": 255, "g": 0, "b": 0, "w": 0})
-
-      pixels_green: list[Pixel] = selected_tile.pixels
-      pixels_green[0].from_dict({"r": 0, "g": 255, "b": 0, "w": 0})
-      pixels_green[1].from_dict({"r": 0, "g": 255, "b": 0, "w": 0})
-      pixels_green[2].from_dict({"r": 0, "g": 255, "b": 0, "w": 0})
-      pixels_green[3].from_dict({"r": 0, "g": 255, "b": 0, "w": 0})
-      pixels_green[4].from_dict({"r": 0, "g": 255, "b": 0, "w": 0})
-      pixels_green[5].from_dict({"r": 0, "g": 255, "b": 0, "w": 0})
-      pixels_green[6].from_dict({"r": 0, "g": 255, "b": 0, "w": 0})
-      pixels_green[7].from_dict({"r": 0, "g": 255, "b": 0, "w": 0})
-      pixels_green[8].from_dict({"r": 0, "g": 255, "b": 0, "w": 0})
-      pixels_green[9].from_dict({"r": 0, "g": 255, "b": 0, "w": 0})
-      pixels_green[10].from_dict({"r": 0, "g": 255, "b": 0, "w": 0})
-      pixels_green[11].from_dict({"r": 0, "g": 255, "b": 0, "w": 0})
-
-      pixels_blue: list[Pixel] = selected_tile.pixels
-      pixels_blue[0].from_dict({"r": 0, "g": 0, "b": 255, "w": 0})
-      pixels_blue[1].from_dict({"r": 0, "g": 0, "b": 255, "w": 0})
-      pixels_blue[2].from_dict({"r": 0, "g": 0, "b": 255, "w": 0})
-      pixels_blue[3].from_dict({"r": 0, "g": 0, "b": 255, "w": 0})
-      pixels_blue[4].from_dict({"r": 0, "g": 0, "b": 255, "w": 0})
-      pixels_blue[5].from_dict({"r": 0, "g": 0, "b": 255, "w": 0})
-      pixels_blue[6].from_dict({"r": 0, "g": 0, "b": 255, "w": 0})
-      pixels_blue[7].from_dict({"r": 0, "g": 0, "b": 255, "w": 0})
-      pixels_blue[8].from_dict({"r": 0, "g": 0, "b": 255, "w": 0})
-      pixels_blue[9].from_dict({"r": 0, "g": 0, "b": 255, "w": 0})
-      pixels_blue[10].from_dict({"r": 0, "g": 0, "b": 255, "w": 0})
-      pixels_blue[11].from_dict({"r": 0, "g": 0, "b": 255, "w": 0})
-
-      pixels_white: list[Pixel] = selected_tile.pixels
-      pixels_white[0].from_dict({"r": 0, "g": 0, "b": 0, "w": 255})
-      pixels_white[1].from_dict({"r": 0, "g": 0, "b": 0, "w": 255})
-      pixels_white[2].from_dict({"r": 0, "g": 0, "b": 0, "w": 255})
-      pixels_white[3].from_dict({"r": 0, "g": 0, "b": 0, "w": 255})
-      pixels_white[4].from_dict({"r": 0, "g": 0, "b": 0, "w": 255})
-      pixels_white[5].from_dict({"r": 0, "g": 0, "b": 0, "w": 255})
-      pixels_white[6].from_dict({"r": 0, "g": 0, "b": 0, "w": 255})
-      pixels_white[7].from_dict({"r": 0, "g": 0, "b": 0, "w": 255})
-      pixels_white[8].from_dict({"r": 0, "g": 0, "b": 0, "w": 255})
-      pixels_white[9].from_dict({"r": 0, "g": 0, "b": 0, "w": 255})
-      pixels_white[10].from_dict({"r": 0, "g": 0, "b": 0, "w": 255})
-      pixels_white[11].from_dict({"r": 0, "g": 0, "b": 0, "w": 255})
-      
-      # Send commands to the selected tile
-      mqtt_send_command(mqtt_client, selected_tile, CmdType.LIGHT, selected_tile.create_light_command(brightness=255, pixels=pixels_red))
-      # Check if the pixels_red command has been sent. Ask the user if it was sent successfully.
-      pixels_red_command_sent = False
-      while pixels_red_command_sent == False:
-        # Wait for 1 second
-        time.sleep(1)
-        # Check if pixels_red command has been sent
-        if selected_tile.pixels == pixels_red:
-          pixels_red_command_sent = True
-          print("Was pixels_red command sent successfully? (y/n)")
-          answer = input()
-          if answer == "n":
+      if answer == "y":       
+            mqtt_send_command(mqtt_client, selected_tile, CmdType.SYSTEM, selected_tile.create_system_command(False, True))
+            # Check if system command has been sent. Ask the user if it was sent successfully
+            system_command_sent = False
+            while system_command_sent == False:
+            # Wait for 1 second
+              time.sleep(1)
+            # Check if system command has been sent
+              if selected_tile.firmware_version != "" and selected_tile.hardware_version != "":
+                system_command_sent = True
+                print("Was system command sent successfully? (y/n)")
+                answer = input()
+                if answer == "n":
+                  break
+      time.sleep(1)
+      # Send light commands
+      if answer == "y":
+            send_and_check_command(selected_tile, {"r": 255, "g": 0, "b": 0, "w": 0}, confirmation_message="Was pixels_red command sent successfully? (y/n)")
+      else:
             break
-          else:
-            # Send command to tile to get light state
-            mqtt_send_command(mqtt_client, selected_tile, CmdType.LIGHT, selected_tile.create_light_command(brightness=255, pixels=pixels_red))
-      # Check if the pixels_green command has been sent. Ask the user if it was sent successfully.
-      pixels_green_command_sent = False
-      while pixels_green_command_sent == False:
-        # Wait for 1 second
-        time.sleep(1)
-        # Check if pixels_green command has been sent
-        if selected_tile.pixels == pixels_green:
-          pixels_green_command_sent = True
-          print("Was pixels_green command sent successfully? (y/n)")
-          answer = input()
-          if answer == "n":
+      time.sleep(1)
+      if answer == "y":
+            send_and_check_command(selected_tile, {"r": 0, "g": 255, "b": 0, "w": 0}, confirmation_message="Was pixels_green command sent successfully? (y/n)")
+      else:
             break
-          else:
-            # Send command to tile to get light state
-            mqtt_send_command(mqtt_client, selected_tile, CmdType.LIGHT, selected_tile.create_light_command(brightness=255, pixels=pixels_green))
-      # Check if the pixels_blue command has been sent. Ask the user if it was sent successfully.
-      pixels_blue_command_sent = False
-      while pixels_blue_command_sent == False:
-        # Wait for 1 second
-        time.sleep(1)
-        # Check if pixels_blue command has been sent
-        if selected_tile.pixels == pixels_blue:
-          pixels_blue_command_sent = True
-          print("Was pixels_blue command sent successfully? (y/n)")
-          answer = input()
-          if answer == "n":
+      time.sleep(1)
+      if answer == "y":
+            send_and_check_command(selected_tile, {"r": 0, "g": 0, "b": 255, "w": 0}, confirmation_message="Was pixels_blue command sent successfully? (y/n)")
+      else:
             break
-          else:
-            # Send command to tile to get light state
-            mqtt_send_command(mqtt_client, selected_tile, CmdType.LIGHT, selected_tile.create_light_command(brightness=255, pixels=pixels_blue))
-      # Check if the pixels_white command has been sent. Ask the user if it was sent successfully.
-      pixels_white_command_sent = False
-      while pixels_white_command_sent == False:
-        # Wait for 1 second
-        time.sleep(1)
-        # Check if pixels_white command has been sent
-        if selected_tile.pixels == pixels_white:
-          pixels_white_command_sent = True
-          print("Was pixels_white command sent successfully? (y/n)")
-          answer = input()
-          if answer == "n":
+      time.sleep(1)
+      if answer == "y":
+            send_and_check_command(selected_tile, {"r": 0, "g": 0, "b": 0, "w": 255}, confirmation_message="Was pixels_white command sent successfully? (y/n)")
+      else:
             break
-          else:
-            # Send command to tile to get light state
-            mqtt_send_command(mqtt_client, selected_tile, CmdType.LIGHT, selected_tile.create_light_command(brightness=255, pixels=pixels_white))
-"""
-     
-
-  # Wait for mqtt client and websocket server to finish (never)
-  await mqtt_task
+      time.sleep(1)
+      # Command so all LEDs go off but without send_and_check_command
+      mqtt_send_command(mqtt_client, selected_tile, CmdType.LIGHT, selected_tile.create_light_command(brightness=0))
 
 # Run the main function
 if __name__== "__main__":
