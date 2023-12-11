@@ -74,7 +74,13 @@ In de onderstaande foto een tekening hier zie je waar alles moet bevestigd worde
 Bevestig aan de binnenkant tegen de boord de ledstrips en verbindt deze met de ESP-32. De speaker plaats je in het bakje perfect in de voorziene openening. Sluit ook deze aan op de ESP-32.
 
 
+## Muziek toevoegen
+
+Om muziek te kunnen plaatsen op de tegel moet je een micro-sd kaart hebben voor in de mediaplayer. Via de computer kan je de muziek op de micro-sd kaart zetten. De code is zo opgebouwd dat volgorde waarin de muziek wordt geplaatst ook de afspeelvolgorde is. Dus is het ook aangewezen om de muziek één per één op de micro-sd kaart te plaatsen. Hieronder zie je hoe je jou muziek een naam geeft.
+
+<img src = "images/musicname.png" width="" height="300">
 
 
+## Opstarten van de tegel
 
-
+Steek de voeding in de tegel en druk de schakelaar aan de zijkant van de tegel aan. Nu kan je de tegel gebruiken.
