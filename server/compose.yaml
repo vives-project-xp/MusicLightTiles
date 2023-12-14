@@ -10,11 +10,3 @@ services:
       - ./control:/code
     env_file:
       - .env
-  command:
-    container_name: command
-    build: 
-      context: ./command_prod
-      dockerfile: Dockerfile
-    ports:
-      - "8080:80"
-
