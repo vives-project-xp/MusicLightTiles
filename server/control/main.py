@@ -12,11 +12,11 @@ from tile import Tile, CmdType, StateType
 from websockets.server import serve, WebSocketServerProtocol
 
 # --- Global constants ---
-BASE_TOPIC = "PM/MLT"
 MQTT_HOST: str = os.getenv("MQTT_SERVER")
 MQTT_PORT: int = int(os.getenv("MQTT_PORT"))
 MQTT_USER = os.getenv("MQTT_USERNAME")
 MQTT_PASS = os.getenv("MQTT_PASSWORD")
+ROOT_TOPIC = os.getenv("MQTT_ROOT_TOPIC")
 LOGGING_LEVEL = logging.INFO
 WEBSOCKET_PORT: int = 3000
 
@@ -84,7 +84,7 @@ def mqtt_on_connect(client: mqtt.Client, userdata, flags, rc: mqtt.ReasonCodes) 
 
   # Subscribe to all the tiles (self topic)
   logging.info("Subscribing to all available tiles")
-  client.subscribe(BASE_TOPIC+"/+/self")
+  client.subscribe(ROOT_TOPIC+"/+/self")
 
 def mqtt_on_message(client: mqtt.Client, userdata, msg: mqtt.MQTTMessage) -> None:
   """The callback for when a PUBLISH message is received from the server."""
@@ -92,11 +92,14 @@ def mqtt_on_message(client: mqtt.Client, userdata, msg: mqtt.MQTTMessage) -> Non
   topic = msg.topic
   payload = msg.payload.decode("utf-8")
 
+  # Remove root topic from topic
+  topic = topic.replace(ROOT_TOPIC+"/", "")
+
   # Split the topic into parts (for easier processing)
   topic_parts = topic.split("/")
 
   # Check if tile with name exists
-  tile_name = topic_parts[2]
+  tile_name = topic_parts[0]
   tile = get_tile(client, tile_name)
 
   # Set project master command type (if it's a pm command)
@@ -144,11 +147,11 @@ def mqtt_send_command(client: mqtt.Client, tile: Tile, type: CmdType, command: s
 
   # Send command to tile
   if type == CmdType.SYSTEM:
-    client.publish(BASE_TOPIC+"/"+tile.device_name+"/self/command/system", command)
+    client.publish(ROOT_TOPIC+"/"+tile.device_name+"/self/command/system", command)
   elif type == CmdType.AUDIO:
-    client.publish(BASE_TOPIC+"/"+tile.device_name+"/self/command/audio", command)
+    client.publish(ROOT_TOPIC+"/"+tile.device_name+"/self/command/audio", command)
   elif type == CmdType.LIGHT:
-    client.publish(BASE_TOPIC+"/"+tile.device_name+"/self/command/light", command)
+    client.publish(ROOT_TOPIC+"/"+tile.device_name+"/self/command/light", command)
 
 def get_tile(client: mqtt.Client, tile_name: str) -> Tile:
   """Returns the tile with the given name, or creates a new one if it doesn't exist."""
@@ -167,11 +170,11 @@ def create_new_tile(client: mqtt.Client, tile_name: str) -> Tile:
   tile = Tile(tile_name)
   tiles.append(tile)
   # Subscribe to the tile's state subtopics
-  client.subscribe(BASE_TOPIC+"/"+tile_name+"/self/state/+")
+  client.subscribe(ROOT_TOPIC+"/"+tile_name+"/self/state/+")
   # Subscribe to the project master's command subtopics
-  client.subscribe(BASE_TOPIC+"/"+tile_name+"/command")
-  client.subscribe(BASE_TOPIC+"/"+tile_name+"/rgb")
-  client.subscribe(BASE_TOPIC+"/"+tile_name+"/effect")
+  client.subscribe(ROOT_TOPIC+"/"+tile_name+"/command")
+  client.subscribe(ROOT_TOPIC+"/"+tile_name+"/rgb")
+  client.subscribe(ROOT_TOPIC+"/"+tile_name+"/effect")
   # Get values from new tile (after 5 seconds, to give the tile time to connect or initialize)
   # This is done so that the controller has accurate values for the tile, even if it was already online before the controller started.
   threading.Timer(5.0, get_values_from_new_tile, [client, tile]).start()
