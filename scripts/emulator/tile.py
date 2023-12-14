@@ -360,7 +360,6 @@ class Tile:
   def _reboot_tile(self, device_name: str) -> None:
     """Sets all variables to their default values, to simulate a reboot."""
     # Constants
-    self._ROOT_TOPIC: str = "PM/MLT"
     self._UPTIME_INTERVAL: int = 1 # 1 second
     self._AMOUNT_OF_PIXELS: int = 12
     self._FIRMWARE_VERSION: str = "0.0.6"
@@ -426,6 +425,7 @@ class Tile:
     self._MQTT_PORT: int = int(os.getenv("MQTT_PORT"))
     self._MQTT_USER: str | None = os.getenv("MQTT_USER")
     self._MQTT_PASS: str | None = os.getenv("MQTT_PASS")
+    self._ROOT_TOPIC: str = os.getenv("ROOT_TOPIC")
     # Variables
     self._device_name: str = device_name
     self._reboot: bool = False
