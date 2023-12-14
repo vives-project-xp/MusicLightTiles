@@ -68,4 +68,3 @@ class Pixel:
       "b": self._blue,
       "w": self._white
     }
-  

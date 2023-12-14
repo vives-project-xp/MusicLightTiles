@@ -1,6 +1,7 @@
 from pixel import Pixel
 from enum import Enum
 import json
+import logging
 
 class CmdType(Enum):
   SYSTEM = "system"
@@ -13,12 +14,10 @@ class StateType(Enum):
   AUDIO = "audio"
   LIGHT = "light"
   PRESENCE = "presence"
-  FULL = "full"
 
 class Tile:
   # Constructor
   def __init__(self, device_name: str):
-    #print("Tile " + device_name + " created")
     self.device_name: str = device_name
     self._online: bool = False
     self._firmware_version: str = ""
@@ -102,20 +101,18 @@ class Tile:
       case StateType.PRESENCE:
         self.update_presence_state(state)
       case _:
-        print("Invalid state type")
+        # Invalid state type, ignore
+        return
 
   def update_online_state(self, state: str) -> None:
     """Set the self state of the tile from a JSON string"""
     if state == "ONLINE":
       self._online = True
-      print("Tile " + self.device_name + " is online")
     elif state == "OFFLINE":
       self._online = False
-      #print("Tile " + self.device_name + " is offline")
     else:
       # Invalid device state, ignore
       return
-    #print("Tile " + self.device_name + " online state updated")
 
   def update_system_state(self, state: str) -> None:
     """Set the system state of the tile from a JSON string"""
@@ -130,9 +127,7 @@ class Tile:
       self._sounds = list(map(str, state_json["sounds"]))
     except:
       # Invalid JSON string (missing keys, wrong types, etc.)
-      pass
-    #else:
-      #print("Tile " + self.device_name + " system state updated")
+      return
 
   def update_audio_state(self, state: str) -> None:
     """Set the audio state of the tile from a JSON string"""
@@ -146,9 +141,7 @@ class Tile:
       self._audio_volume = int(state_json["volume"])
     except:
       # Invalid JSON string (missing keys, wrong types, etc.)
-      pass
-    #else:
-      #print("Tile " + self.device_name + " audio state updated")
+      return
 
   def update_light_state(self, state: str) -> None:
     """Set the light state of the tile from a JSON string"""
@@ -169,9 +162,7 @@ class Tile:
         self._pixels = self._pixels[:len(pixels)]
     except:
       # Invalid JSON string (missing keys, wrong types, etc.)
-      pass
-    #else:
-      #print("Tile " + self.device_name + " light state updated")
+      return
 
   def update_presence_state(self, state: str) -> None:
     """Set the presence state of the tile from a JSON string"""
@@ -182,98 +173,7 @@ class Tile:
       self._detected = bool(state_json["detected"])
     except:
       # Invalid JSON string (missing keys, wrong types, etc.)
-      pass
-    #else:
-      #print("Tile " + self.device_name + " presence state updated")
-  
-  def get_state(self, state_type: StateType) -> dict:
-    """Get the state of the tile as a dictionary"""
-    match state_type:
-      case StateType.ONLINE:
-        return self.get_online_state()
-      case StateType.SYSTEM:
-        return self.get_system_state()
-      case StateType.AUDIO:
-        return self.get_audio_state()
-      case StateType.LIGHT:
-        return self.get_light_state()
-      case StateType.PRESENCE:
-        return self.get_presence_state()
-      case StateType.FULL:
-        return self.get_full_state()
-      case _:
-        print("Invalid state type")
-        return ""
-  
-  def get_online_state(self) -> dict:
-    """Get the self state of the tile as a dictionary"""
-    # Create a dictionary to hold the state
-    state: dict = {
-      "online": self._online
-    }
-    # Return the dictionary
-    return state
-  
-  def get_system_state(self) -> dict:
-    """Get the system state of the tile as a dictionary"""
-    # Create a dictionary to hold the state
-    state: dict = {
-      "firmware": self._firmware_version,
-      "hardware": self._hardware_version,
-      "ping": self._pinging,
-      "uptime": self._uptime,
-      "sounds": self._sounds
-    }
-    # Return the dictionary
-    return state
-  
-  def get_audio_state(self) -> dict:
-    """Get the audio state of the tile as a dictionary"""
-    # Create a dictionary to hold the state
-    state: dict = {
-      "state": self._audio_state,
-      "looping": self._audio_looping,
-      "sound": self._audio_sound,
-      "volume": self._audio_volume
-    }
-    # Return the dictionary
-    return state
-  
-  def get_light_state(self) -> dict:
-    """Get the light state of the tile as a dictionary"""
-    # Convert the pixels to a list of dictionaries
-    pixels_dict: list[dict] = []
-    for pixel in self._pixels:
-      pixels_dict.append(pixel.to_dict())
-    # Create a dictionary to hold the state
-    state: dict = {
-      "brightness": self._brightness,
-      "pixels": pixels_dict
-    }
-    # Return the dictionary
-    return state
-  
-  def get_presence_state(self) -> dict:
-    """Get the presence state of the tile as a dictionary"""
-    # Create a dictionary to hold the state
-    state: dict = {
-      "detected": self._detected
-    }
-    # Return the dictionary
-    return state
-  
-  def get_full_state(self) -> dict:
-    """Get the full state of the tile as a dictionary"""
-    # Create a dictionary to hold the state
-    state: dict = {
-      "online": self._online,
-      "system": self.get_system_state(),
-      "audio": self.get_audio_state(),
-      "light": self.get_light_state(),
-      "presence": self.get_presence_state()
-    }
-    # Return the dictionary
-    return state
+      return
 
   def create_system_command(self, reboot: bool = False, ping: bool = None):
     """Create a command to send to the tile to change the system state"""
