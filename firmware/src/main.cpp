@@ -6,7 +6,7 @@
 #include <Adafruit_NeoPixel.h>
 #include <DFRobotDFPlayerMini.h>
 
-// Import secret.h (contains ssid, password, mqtt server, mqtt port, mqtt user and mqtt password)
+// Import secret.h (contains the projects secrets and configuration)
 #include "secret.h"
 
 // Define mode enum (mode switch)
@@ -46,15 +46,13 @@ struct Pixel {
 #define RX_PIN 1           // pin rx, should be connected to tx of dfplayer
 #define TX_PIN 0           // pin tx, should be connected to rx of dfplayer
 
-// Define MQTT constants
-const char* rootTopic = "PM/MLT";
-
+// Define constants
 const int uptimeInterval = 1000; // interval in milliseconds to update uptime
 
 // Define device specific constants
 const int amount_of_pixels = 12; // amount of pixels in the led strip
-const char* firmware_version = "0.0.7";
-const char* hardware_version = "0.0.2";
+const char* firmware_version = "1.0.0";
+const char* hardware_version = "1.5.0";
 const String sounds[] = {
   "A cat meowing",
   "A dog barking",
@@ -291,8 +289,8 @@ void mqtt_setup() {
   device_name = mac;
 
   // Set state and command topics
-  stateTopic = String(rootTopic) + "/" + String(device_name) + "/self/state";
-  commandTopic = String(rootTopic) + "/" + String(device_name) + "/self/command";
+  stateTopic = String(root_topic) + "/" + String(device_name) + "/self/state";
+  commandTopic = String(root_topic) + "/" + String(device_name) + "/self/command";
 
   // Set wifi hostname to device name
   WiFi.setHostname(device_name.c_str());
@@ -454,10 +452,10 @@ void connectToMqtt() {
   }
   // Connect to MQTT broker
   while (!client.connected()) {
-    if (client.connect(device_name.c_str(), mqtt_user, mqtt_password, (String(rootTopic) + "/" + String(device_name) + "/self").c_str(), 1, true, String("OFFLINE").c_str())) {
+    if (client.connect(device_name.c_str(), mqtt_user, mqtt_password, (String(root_topic) + "/" + String(device_name) + "/self").c_str(), 1, true, String("OFFLINE").c_str())) {
       Serial.println("Connected to MQTT broker as " + String(device_name));
       // Publish online message
-      client.publish((String(rootTopic) + "/" + String(device_name) + "/self").c_str(), String("ONLINE").c_str(), true);
+      client.publish((String(root_topic) + "/" + String(device_name) + "/self").c_str(), String("ONLINE").c_str(), true);
       // Publish initial state
       client.publish((stateTopic + "/system").c_str(), getSystemState().c_str());
       client.publish((stateTopic + "/audio").c_str(), getAudioState().c_str());
@@ -478,7 +476,7 @@ void disconnectFromMqtt() {
   // Disconnect from MQTT broker
   if (client.connected()) {
     // Publish offline message
-    client.publish((String(rootTopic) + "/" + String(device_name) + "/self").c_str(), String("OFFLINE").c_str(), true);
+    client.publish((String(root_topic) + "/" + String(device_name) + "/self").c_str(), String("OFFLINE").c_str(), true);
     // Disconnect from MQTT broker
     client.disconnect();
     while (client.connected()) {
