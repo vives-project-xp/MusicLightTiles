@@ -1,8 +1,10 @@
 from tile import Tile
 import multiprocessing
 import threading
+import dotenv
 import random
 import time
+import os
 
 def random_presence_detection(tile: Tile, stop_event: multiprocessing.Event) -> None:
   """Simulates random presence detection."""
@@ -38,6 +40,16 @@ def create_and_run_tile(name: str, stop_event: multiprocessing.Event, random_pre
     tile.run(stop_event)
 
 if __name__ == '__main__':
+  # Get environment variables
+  dotenv.load_dotenv()
+  # Get the RANDOM_PRESENCE environment variable casted to a bool (default: False)
+  RANDOM_PRESENCE: bool = os.getenv("RANDOM_PRESENCE", "false").lower() == "true"
+
+  if RANDOM_PRESENCE:
+    print("Random presence detection enabled")
+  else:
+    print("Random presence detection disabled")
+
   # Request user input
   amount = int(input("How many tiles do you want to simulate?\n"))
 
@@ -47,7 +59,7 @@ if __name__ == '__main__':
   # Create a list of processes and start them
   processes: list[multiprocessing.Process] = []
   for i in range(amount):
-    process = multiprocessing.Process(target=create_and_run_tile, args=(f"TILE{i+1}", stop_event, True))
+    process = multiprocessing.Process(target=create_and_run_tile, args=(f"TILE{i+1}", stop_event, RANDOM_PRESENCE))
     processes.append(process)
     process.start()
 

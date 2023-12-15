@@ -69,3 +69,10 @@ class Pixel:
       "w": self._white
     }
   
+  # Equal
+  def __eq__(self, other) -> bool:
+    return self._red == other.red and self._green == other.green and self._blue == other.blue and self._white == other.white
+  
+  # Not equal
+  def __ne__(self, other) -> bool:
+    return not self.__eq__(other)

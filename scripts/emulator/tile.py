@@ -79,7 +79,10 @@ class Tile:
         self._brightness = int(light_command["brightness"] / 100 * 255)
         # Set pixels
         for i in range(0, self._AMOUNT_OF_PIXELS):
-          self._pixels[i].from_dict(dict(light_command["pixels"][i]))
+          # If pixel exists
+          if i < len(light_command["pixels"]):
+            # Set pixel
+            self._pixels[i].from_dict(light_command["pixels"][i])
       else:
         # Not a valid topic
         pass
@@ -245,12 +248,12 @@ class Tile:
     """Updates the necessary light variables.
 
     Returns true if the light state has changed."""
-    # Check if brightness or pixels changed
+    # Check if brightness or pixel values have changed
     if self._previous_brightness != self._brightness or self._previous_pixels != self._pixels:
       # Update previous brightness
       self._previous_brightness = self._brightness
-      # Update previous pixels
-      self._previous_pixels = self._pixels
+      # Update previous pixels with values from current pixels
+      self._previous_pixels = [Pixel(pixel.red, pixel.green, pixel.blue, pixel.white) for pixel in self._pixels]
       # Return true
       return True
     else:
@@ -434,20 +437,20 @@ class Tile:
     self._uptime: int = 0
     self._last_time: int = 0
     self._presence: bool = False
-    self._previous_presence: bool = self._presence
+    self._previous_presence: bool = False
     self._audio_mode: int = 4 # 1 = play, 2 = pause, 3 = resume, 4 = stop
-    self._previous_audio_mode: int = self._audio_mode
+    self._previous_audio_mode: int = 4
     self._audio_state: int = 0 # 0 = idle, 1 = playing, 2 = paused
     self._audio_loop: bool = False
-    self._previous_audio_loop: bool = self._audio_loop
+    self._previous_audio_loop: bool = False
     self._audio_sound: str = self._SOUNDS[0]
-    self._previous_audio_sound: str = self._audio_sound
+    self._previous_audio_sound: str = self._SOUNDS[0]
     self._volume: int = 0 # 0 - 30
-    self._previous_volume: int = self._volume
+    self._previous_volume: int = 0
     self._brightness: int = 0 # 0 - 255
-    self._previous_brightness: int = self._brightness
+    self._previous_brightness: int = 0
     self._pixels: list[Pixel] = [Pixel(0, 0, 0, 0) for i in range(0, self._AMOUNT_OF_PIXELS)]
-    self._previous_pixels: list[Pixel] = self._pixels
+    self._previous_pixels: list[Pixel] = [Pixel(0, 0, 0, 0) for i in range(0, self._AMOUNT_OF_PIXELS)]
     # MQTT
     self._state_topic: str = f"{self._ROOT_TOPIC}/{self._device_name}/self/state"
     self._command_topic: str = f"{self._ROOT_TOPIC}/{self._device_name}/self/command"
