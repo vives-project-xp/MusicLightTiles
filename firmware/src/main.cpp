@@ -409,11 +409,17 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
     JsonArray light_pixels = doc["pixels"];
     for (int i = 0; i < amount_of_pixels; i++) {
-      JsonObject pixel = light_pixels[i];
-      pixels[i].red = pixel["r"];
-      pixels[i].green = pixel["g"];
-      pixels[i].blue = pixel["b"];
-      pixels[i].white = pixel["w"];
+      // Try to get pixel from json array, if it doesn't exist, leave current values
+      try: {
+        // Set pixel values
+        JsonObject pixel = light_pixels[i];
+        pixels[i].red = pixel["r"];
+        pixels[i].green = pixel["g"];
+        pixels[i].blue = pixel["b"];
+        pixels[i].white = pixel["w"];
+      } catch (...) {
+        // Do nothing
+      }
     }
   }
   else {
