@@ -32,6 +32,10 @@ class Tile:
     self._brightness: int = 0
     self._pixels: list[Pixel] = []
     self._detected: bool = False
+    self.invalid_system_state: bool = False
+    self.invalid_audio_state: bool = False
+    self.invalid_light_state: bool = False
+    self.invalid_presence_state: bool = False
 
   # Properties
   @property
@@ -126,7 +130,8 @@ class Tile:
       self._uptime = int(state_json["uptime"])
       self._sounds = list(map(str, state_json["sounds"]))
     except:
-      # Invalid JSON string (missing keys, wrong types, etc.)
+      # Invalid JSON string (missing keys, wrong types, etc.), set invalid flag
+      self.invalid_system_state = True
       return
 
   def update_audio_state(self, state: str) -> None:
@@ -140,7 +145,8 @@ class Tile:
       self._audio_sound = str(state_json["sound"])
       self._audio_volume = int(state_json["volume"])
     except:
-      # Invalid JSON string (missing keys, wrong types, etc.)
+      # Invalid JSON string (missing keys, wrong types, etc.), set invalid flag
+      self.invalid_audio_state = True
       return
 
   def update_light_state(self, state: str) -> None:
@@ -161,7 +167,8 @@ class Tile:
       if len(self._pixels) > len(pixels):
         self._pixels = self._pixels[:len(pixels)]
     except:
-      # Invalid JSON string (missing keys, wrong types, etc.)
+      # Invalid JSON string (missing keys, wrong types, etc.), set invalid flag
+      self.invalid_light_state = True
       return
 
   def update_presence_state(self, state: str) -> None:
@@ -172,7 +179,8 @@ class Tile:
       # Detection
       self._detected = bool(state_json["detected"])
     except:
-      # Invalid JSON string (missing keys, wrong types, etc.)
+      # Invalid JSON string (missing keys, wrong types, etc.), set invalid flag
+      self.invalid_presence_state = True
       return
 
   def create_system_command(self, reboot: bool = False, ping: bool = None):
