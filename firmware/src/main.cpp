@@ -241,8 +241,8 @@ void demo_setup() {
   volume = 30; // 15 = 50% volume
   // Set audio loop
   audio_loop = true;
-  // Set brightness to 100
-  brightness = 100;
+  // Set brightness to 150
+  brightness = 150;
 }
 
 // Demo loop function (loop for demo mode)
@@ -309,20 +309,20 @@ void mqtt_setup() {
 
 // MQTT loop function (loop for MQTT mode)
 void mqtt_loop() {
-  // If not connected to MQTT broker, try to connect
-  if (!client.connected()) {
-    // Disconnect from MQTT broker
-    disconnectFromMqtt();
-    // Connect to MQTT broker
-    connectToMqtt();
-  }
-
   // If not connected to Wi-Fi, try to connect
   if (WiFi.status() != WL_CONNECTED) {
     // Disconnect from Wi-Fi
     disconnectFromWifi();
     // Connect to Wi-Fi
     connectToWifi();
+  }
+
+  // If not connected to MQTT broker, try to connect
+  if (!client.connected()) {
+    // Disconnect from MQTT broker
+    disconnectFromMqtt();
+    // Connect to MQTT broker
+    connectToMqtt();
   }
 
   // Keep the MQTT connection alive look for incoming messages
@@ -410,7 +410,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
     JsonArray light_pixels = doc["pixels"];
     for (int i = 0; i < amount_of_pixels; i++) {
       // Try to get pixel from json array, if it doesn't exist, leave current values
-      try: {
+      try {
         // Set pixel values
         JsonObject pixel = light_pixels[i];
         pixels[i].red = pixel["r"];
