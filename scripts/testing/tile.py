@@ -1,7 +1,6 @@
 from pixel import Pixel
 from enum import Enum
 import json
-import logging
 
 class CmdType(Enum):
   SYSTEM = "system"
