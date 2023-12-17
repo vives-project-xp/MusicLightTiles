@@ -7,7 +7,7 @@
 Welcome to the MusicLightTiles project!  
 This project was created as part of the Project Experience course at [VIVES University of Applied Sciences](https://www.vives.be/en).  
 The goal of this project was to create a Proof of Concept interactive floor tile that can play music and light up when someone stands on it.  
-The tile should also be able to work with [Project Master](https://github.com/vives-project-xp/ProjectMaster).  
+The tile also needed to work with [Project Master](https://github.com/vives-project-xp/ProjectMaster).  
 
 ## The team
 
