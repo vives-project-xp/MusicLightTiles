@@ -1,6 +1,6 @@
 # MusicLightTiles
 
-![360° view](./img/360.mp4)
+![360° view](./img/360.gif)
 
 ## About
 
