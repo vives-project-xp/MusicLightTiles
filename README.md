@@ -1,61 +1,98 @@
 # MusicLightTiles
 
-![360° view](./media/360.gif)
+![360° view](./img/360.gif)
 
 ## About
 
-This project is a set of 3D printed tiles that light up and play music when you stand on them. 
-The tiles are designed to be modular and can be arranged in any configuration you like or be used as standalone tiles.
+Welcome to the MusicLightTiles project!  
+This project was created as part of the Project Experience course at [VIVES University of Applied Sciences](https://www.vives.be/en).  
+The goal of this project was to create a Proof of Concept interactive floor tile that can play music and light up when someone stands on it.  
+The tile also needed to work with [Project Master](https://github.com/vives-project-xp/ProjectMaster).  
 
-> [!IMPORTANT]  
-> This project is still in development and not yet finished.  
-> All the code and designs are early prototypes and are subject to change.  
+## The team
 
-## Parts
+- [Rob Cocquyt](https://github.com/Robbedoes24)
+- [Ruben Belligh](https://github.com/RubenBelligh)
+- [Luca De Clerck](https://github.com/LucaClrk)
+- [Alberiek Depreytere](https://github.com/AlberiekDepreytere)
 
-The base of the tiles is 3D printed, all other components are off the shelf parts.
-Below is a list of all the parts used to build 3 tiles.
+## Features
 
-| Part | Quantity | Price | Link |
-| ---- | -------- | ----- | ---- |
-| ESP32 (x3) | 1 | €22,99 | [Az-Delivery](https://www.az-delivery.de/nl/products/esp32-dev-kit-c-unverlotet?variant=32437204582496) |
-| DC DC Step Down (x3) | 1 | €5,99 | [Az-Delivery](https://www.az-delivery.de/nl/products/lm2596s-dc-dc-step-down-modul-1?variant=12228728324192) |
-| Media player (3x) | 1 | €8,49 | [Az-Delivery](https://www.az-delivery.de/nl/products/mp3-player-modul?variant=8198615695456) |
-| Speaker (6x) | 1 | €13,99 | [Az-Delivery](https://www.az-delivery.de/nl/products/2-stuck-dfplayer-mini-3-watt-8-ohm-mini-lautsprecher-mit-jst-ph2-0-mm-pin-schnittstelle-fur-arduino-raspberry-pi-und-elektronische-diy-projekte-inklusive-e-book?variant=39441379131488) |
-| Micro SD card 8gb | 3 | €4,79 | [Amazon.com.be](https://www.amazon.com.be/-/nl/Intenso-3413450-Micro-SDHC-geheugenkaart-GB-klasse/dp/B008RDCCFS/ref=sr_1_3?crid=32IRLW4WPV8D7&keywords=micro%2Bsd%2B4gb&qid=1695657846&s=electronics&sprefix=micro%2Bsd%2B4gb%2Celectronics%2C78&sr=1-3&th=1) |
-| Aluminium tape | 1 | €8,53 | [Amazon.com.be](https://www.amazon.com.be/-/nl/GOCABLETIES-aluminiumfolie-isolatietape-HVAC-reparatie-afdichting/dp/B07KQDQHC9/ref=sr_1_11?crid=3KMIFELKZP5V4&keywords=aluminium%2Btape&qid=1695657415&sprefix=alumi%2Caps%2C78&sr=8-11&th=1) |
-| Seal strip D-profile | 1 | €9,99 | [Amazon.com.be](https://www.amazon.com.be/-/nl/Youshares-afdichtband-viltapparaat-geluidsisolerend-weerbestendig/dp/B081C5VYXF/ref=sr_1_5?crid=W4W0U74CBUXH&keywords=tochtstrip&qid=1695657255&sprefix=toch%2Caps%2C94&sr=8-5&th=1) |
-| Ledstrip 1,6m 24v | 3 | €13,13 | stock |
-| PolyCarbonate plate 5mm | 3 | €30,00 | Reserved |
-| Power supply 24v 2,5A | 3 | €20,00 | Reserved |
+- Small form factor
+- Can work standalone or as a set
+- Hardcoded and wireless modes
+- Add your own music
+- Individualy addressable RGB leds
+- Tested for 85kg of weight
+- Can detect people starting from 5kg
+- Works with [Project Master](https://github.com/vives-project-xp/ProjectMaster)
 
-Total cost: €273,74 (excluding 3d printed parts)
+## How it works
 
-## 3D printed parts
+Each tile has an ESP32 microcontroller that controls the lights and music and detects when someone stands on the tile.  
+The tile reacts differently depending on the mode it is in, more info about this in the [Modes](#modes) section.  
 
-The 3D printed parts are designed in Fusion 360 and can be found in the `./3d` folder.
-The parts are designed to be printed with PLA, but PETG or ABS should also work.
+### Person detection
 
-> [!NOTE]  
-> The 3d models are still in development and are not available yet.
+To detect when someone stands on the tile, the ESP32 uses a simple circuit with 2 conductive strips.  
+When someone stands on the tile, the conductive strips touch each other and close the circuit.  
+To make sure the circuit is normally open, the tile uses seal strip to keep the plate (where people stand on) and the base (where the circuit is) separated.  
+This way, the circuit is only closed when someone stands on the tile, because the seal strip is compressed.  
+When the person later leaves the tile, the seal strip will decompress and push the plate back up, opening the circuit again.  
 
-## Person detection
+![Section View](./img/sectionview.png)
 
-The tiles are supported by a small rubber strip that compresses when you stand on it.
-This compression makes 2 conductive strips touch each other and close the circuit.
-The ESP32 can detect this and trigger the lights and music.
+### Audio
 
-![Person detection](./media/sectionview.png)
+For the audio, we use a DFPlayer Mini.
+This is a small mp3 player that can be controlled with a serial connection.  
+The ESP32 sends commands to the DFPlayer Mini to play, pause, stop, change volume, etc.  
+The player has a micro SD card slot where you can put your own music.  
+This player also has a built-in amplifier, so you can connect a speaker directly to it (3W speaker recommended).  
 
-## Project canvas
+### Lights
 
-![Project canvas](./media/projectcanvas.jpg)
+For the lights, we use a WS2814 LED strip.  
+This is a 24v LED strip with individually addressable RGB led sections.  
+Each section has 6 leds and is about 10cm long.  
 
-## Team assignments
+## Modes
 
-| Team member | Assignment |
-| ---- | ---------- |
-| [Rob Cocquyt](https://github.com/Robbedoes24) | MQTT communication and general tasks |
-| [ Ruben Belligh](https://github.com/RubenBelligh) | Person Detection |
-| [Luca De Clerck](https://github.com/LucaClrk) | Lighting solution |
-| [Alberiek Depreytere](https://github.com/AlberiekDepreytere) | Audio solution |
+The tiles can work in 2 modes:
+
+- Hardcoded mode (Demo mode)
+- Wireless mode (MQTT mode)
+
+### Demo mode
+
+In this mode, every tile will work on its own.  
+When someone stands on a tile, the lights will turn on and music will start playing.  
+When the person leaves the tile, the lights will turn red  and music will stop.  
+
+### MQTT mode
+
+In this mode, the tiles basically function as a sensor and actuator.  
+When the state of a tile changes (like when someone stands on it), it will send a message to the MQTT broker.  
+When a tile receives a command from the MQTT broker, it will execute the command and change its state accordingly.  
+
+With the help of the server, you can control multiple tiles with the same command.  
+This makes it possible to create a set of tiles that work together and can be controlled from a single point.  
+
+## Project state
+
+This project is currently in a working state.  
+The tiles can be used in both modes and can be controlled with the [Project Master](https://github.com/vives-project-xp/ProjectMaster).  
+There is an api available to control the tiles with websocket messages.
+We started on a web interface to control the tiles, but this is not finished yet.
+
+## Documentation
+
+If you want to build your own tile(s) or build further on this project, you can find all aditional information in the [Wiki](https://github.com/vives-project-xp/MusicLightTiles/wiki).    
+
+## Future improvements
+
+- Finish the web interface.
+- Replace the led strip with a 5v one, so the leds can be controlled individually.
+- Replace the DFPlayer Mini with custom circuitry, so there won't be any delay when playing music.
+- Add effects to the control server.
+- Make the tiles cheaper to produce (so they can be used in schools, etc.).

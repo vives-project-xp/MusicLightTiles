@@ -1,0 +1,12 @@
+services:
+  control:
+    container_name: control
+    build: 
+      context: ./control
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./control:/code
+    env_file:
+      - .env
